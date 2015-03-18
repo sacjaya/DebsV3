@@ -7,6 +7,7 @@ import org.wso2.siddhi.core.query.output.callback.QueryCallback;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.debs.extensions.maxK.MaxKTimeTransformerCopy;
+import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -78,6 +79,65 @@ public class debsTest {
 
 
         Thread.sleep(10000);
+        executionPlanRuntime.shutdown();
+
+    }
+
+
+
+    @Test
+    public void MaxKTransformer2Test() throws InterruptedException {
+
+        SiddhiManager siddhiManager = new SiddhiManager();
+        Map<String,Class> extensionMap = new HashMap<String, Class>();
+        extensionMap.put("MaxK:getMaxK",MaxKTimeTransformerForQuery2.class);
+        siddhiManager.getSiddhiContext().setSiddhiExtensions(extensionMap);
+
+
+        //  pickup_datetime, dropoff_datetime, count(*) as tripCount, iij_timestamp group by startCellNo,endCellNo
+
+
+        //profit_per_taxi, profit, emptyTaxiCount, cellNo,10, iij_timestamp
+
+
+        String polarStream = "define stream countStream (profit_per_taxi float, profit long, emptyTaxiCount int, startCellNo String, tripCount long); ";
+        String query = "@info(name = 'query1') " +
+                "from countStream#MaxK:getMaxK(profit_per_taxi, profit, emptyTaxiCount, startCellNo,5, tripCount) " +
+                "select * insert into outputStream";
+
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(polarStream +query);
+
+        executionPlanRuntime.addCallback("query1", new QueryCallback() {
+            @Override
+            public void receive(long timeStamp, Event[] inEvents, Event[] removeEvents) {
+                EventPrinter.print(timeStamp, inEvents, removeEvents);
+//                if (inEvents != null) {
+//                    inEventCount = inEventCount + inEvents.length;
+//                    Assert.assertEquals(12, Math.round((Double) inEvents[0].getData(0)));
+//                    Assert.assertEquals(5, Math.round((Double) inEvents[0].getData(1)));
+//
+//                }
+//                eventArrived = true;
+            }
+
+        });
+
+
+
+        InputHandler inputHandler = executionPlanRuntime.getInputHandler("countStream");
+        executionPlanRuntime.start();
+        inputHandler.send(new Object[]{18f, 1l, 5, "sd", 123l});
+        inputHandler.send(new Object[]{500f, 1l, 5, "Sss", 123l});
+        inputHandler.send(new Object[]{500f, 1l, 5, "Sss", 123l});
+        inputHandler.send(new Object[]{10f, 1l, 5, "qsd", 123l});
+        inputHandler.send(new Object[]{160f, 1l, 5, "dasd", 123l});
+        inputHandler.send(new Object[]{200f, 1l, 5, "dsd", 123l});
+        inputHandler.send(new Object[]{300f, 1l, 5, "qwsd", 123l});
+
+
+
+
+        Thread.sleep(1000);
         executionPlanRuntime.shutdown();
 
     }
