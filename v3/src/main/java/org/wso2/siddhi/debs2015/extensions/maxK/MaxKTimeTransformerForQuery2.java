@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
 
-    private static final Logger LOGGER = Logger.getLogger(MaxKTimeTransformerCopy.class);
+    private static final Logger LOGGER = Logger.getLogger(MaxKTimeTransformerForQuery2.class);
     private boolean debugEnabled = false;
 
     private String value = "";
