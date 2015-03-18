@@ -122,7 +122,7 @@ public class EventSenderThread extends Thread {
                         prevTime = currentTime;
                     }
                     count++;
-                    //System.out.println(count);
+                    
                     if (count > EVENT_COUNT){
                         percentageCompleted = ((float)count/ EVENT_COUNT);
                         currentTime = System.currentTimeMillis();
