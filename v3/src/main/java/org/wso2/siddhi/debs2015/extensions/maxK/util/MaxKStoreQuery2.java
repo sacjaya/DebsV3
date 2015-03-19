@@ -23,8 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreQuery2 {
     //Holds the Max K readings
-    private Map<String, Float> units = new ConcurrentHashMap<String, Float>();
-    private Map<Float, List<CustomObj>> maxValues  = new TreeMap<Float, List<CustomObj>>();
+    private Map<String, Double> units = new ConcurrentHashMap<String, Double>();
+    private Map<Double, List<CustomObj>> maxValues  = new TreeMap<Double, List<CustomObj>>();
     //No of data to be held in the Map: The value of K
 
     /**
@@ -36,13 +36,13 @@ public class MaxKStoreQuery2 {
      * @params date - The timestamp the pressure reading was produced.
      *
      */
-    public synchronized Map<Float, List<CustomObj>> getMaxK(CustomObj customObj) {
+    public synchronized Map<Double, List<CustomObj>> getMaxK(CustomObj customObj) {
         String cell = customObj.getCellID();
-        Float count = (Float) customObj.getProfit_per_taxi();
+        Double count = (Double) customObj.getProfit_per_taxi();
         if(count==0){
         	//We have to make sure that the units contains the cell id we are looking for. Otherwise we may get a NullPointerException.
         	if (units.containsKey(cell)) {
-                Float previousCount = units.get(cell);
+                Double previousCount = units.get(cell);
                 units.remove(cell);
                 maxValues.get(previousCount).remove(customObj);
         	}
@@ -54,7 +54,7 @@ public class MaxKStoreQuery2 {
         	//"units" is an index of which the key is the cell ID and the value is the count.
 
             if (units.containsKey(cell)) {
-                Float previousCount = units.get(cell);
+                Double previousCount = units.get(cell);
                 units.put(cell, count);
                 maxValues.get(previousCount).remove(customObj);
                 List<CustomObj> cellsList = maxValues.get(count);
@@ -79,7 +79,7 @@ public class MaxKStoreQuery2 {
         }
 
         // Returns the pressure readings that are sorted in descending order according to the key (pressure value).
-        return new TreeMap<Float, List<CustomObj>>(maxValues).descendingMap();
+        return new TreeMap<Double, List<CustomObj>>(maxValues).descendingMap();
 
     }
 

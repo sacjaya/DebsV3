@@ -156,10 +156,10 @@ public class Query2 {
 
         //join median and empty taxis
         String query8 = "@info(name = 'query8') " +
-                "from profitStream#window.length(1) join emptyTaxiTable  " +
+                "from profitStream#window.length(0) join emptyTaxiTable  " +
                "on profitStream.startCellNo == emptyTaxiTable.cellNo " +
                 "select profitStream.startCellNo as cellNo , profitStream.pickup_datetime as pickup_datetime , profitStream.dropoff_datetime as dropoff_datetime, " +
-                "profitStream.profit as profit , count(medallion) as emptyTaxiCount , profitStream.iij_timestamp as iij_timestamp " +
+                "profitStream.profit as profit ,   emptyTaxiTable.medallion as extra_medallion, count(emptyTaxiTable.medallion) as emptyTaxiCount , emptyTaxiTable.dropoff_datetime as extra_dropoff_datetime, emptyTaxiTable.cellNo as extra_cell, profitStream.iij_timestamp as iij_timestamp " +
                 "group by emptyTaxiTable.cellNo " +
                 "insert into profitRawData;";
 
@@ -167,7 +167,7 @@ public class Query2 {
         //The profitability of an area is determined by dividing the area profit by the number of empty taxis in that area within the last 15 minutes.
         //get profit
         String query9 = "@info(name = 'query9') " +
-                "from profitRawData " +
+                "from profitRawData[emptyTaxiCount != 0] " +
                 "select cellNo, profit, emptyTaxiCount,  pickup_datetime, dropoff_datetime, profit/emptyTaxiCount as profit_per_taxi, iij_timestamp " +
                 "insert into finalProfitStream;";
 
@@ -204,7 +204,7 @@ public class Query2 {
         //is produced. Participants must determine the delay using the current system time right after reading the input and right before writing
         //the output. This attribute will be used in the evaluation of the submission.
 
-        executionPlanRuntime.addCallback("profitRawData", new StreamCallback() {
+        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
             long count = 1;
             long totalLatency = 0;
             long latencyFromBegining = 0;
@@ -217,7 +217,9 @@ public class Query2 {
             long latency = 0;
             @Override
             public void receive(Event[] events) {
+                count = count+events.length;
                 EventPrinter.print(events);
+                System.out.println(count+"*************************");
 //                    for (Event evt : events) {
 //                        currentTime = System.currentTimeMillis();
 //                        long eventOriginationTime = (Long) evt.getData()[22];

@@ -80,8 +80,6 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
 //    profitable_cell_id_10, empty_taxies_in_cell_id_10, median_profit_in_cell_id_10, profitability_of_cell_10, delay
     @Override
     protected List<Attribute> init(AbstractDefinition abstractDefinition, ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAaaaa");
-
         if (expressionExecutors.length != 6) {
             LOGGER.error("Required Parameters : Six");
             throw new ExecutionPlanCreationException("Mismatching Parameter count.");
@@ -180,12 +178,12 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
 
         // //profit_per_taxi, profit, emptyTaxiCount, cellNo,10, iij_timestamp
 
-        Float eventKeyValue = (Float) object[0];//This is the profit_per_taxi
+        Double eventKeyValue = (Double) object[0];//This is the profit_per_taxi
         Object profitValue = object[1];
         Object emptyTaxiCountValue = object[2];
         String cellValue = (String) object[3];
 
-        Map<Float, List<CustomObj>> currentTopK;
+        Map<Double, List<CustomObj>> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
 
