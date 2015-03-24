@@ -149,7 +149,8 @@ public class MedianAggregator extends AttributeAggregator {
 
 
     public float getMedian() {
-
+        if(totalElements == 0)
+            return 0;
         if (totalElements % 2 == 0) {
             return (maxHeap.peekFirst() + minHeap.peekLast()) / 2;
         } else {
