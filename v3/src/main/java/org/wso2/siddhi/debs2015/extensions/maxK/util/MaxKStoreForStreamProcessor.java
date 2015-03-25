@@ -24,12 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreForStreamProcessor {
     private Map<String, Integer> units = new ConcurrentHashMap<String, Integer>(); //The units Map keeps the trip count for each and every cell. The index is based on the cell ID.
-    private Map<Integer, TreeSet<CustomObjQuery1>> maxValues  = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
-
-        public int compare(Integer o1, Integer o2) {
-            return o2.compareTo(o1);
-        }
-    });
+    private Map<Integer, ArrayList<String>> maxValues  = new TreeMap<Integer, ArrayList<String>>();
     private long count;
 
     /**
@@ -66,7 +61,7 @@ public class MaxKStoreForStreamProcessor {
             //which is non-zero, the old value is replaced with the new value.
 
             //The maxValues TreeMap holds the list of cells for each count.
-            //"units" is an index of which the key is the cell ID and the value is the count.
+            //"units" is a reverse index of which the key is the cell ID and the value is the count.
 
 
             Integer key = units.get(cell);
@@ -77,38 +72,28 @@ public class MaxKStoreForStreamProcessor {
 
                 units.put(cell, tripCount);
                 maxValues.get(previousCount).remove(customObjQ1);
-                TreeSet<CustomObjQuery1> cellsList = maxValues.get(tripCount);
+                ArrayList<String> cellsList = maxValues.get(tripCount);
 
                 if (cellsList != null) {
                     if(cellsList.size()==10)
-                        cellsList.remove(cellsList.last());
-                    cellsList.add(customObjQ1);
+                        cellsList.remove(0);
+                    cellsList.add(cell);
                 } else {
-                    cellsList = new TreeSet<CustomObjQuery1>(new Comparator<CustomObjQuery1>() {
-
-                        public int compare(CustomObjQuery1 o1, CustomObjQuery1 o2) {
-                            return (o2.getCount()).compareTo(o1.getCount());
-                        }
-                    });
-                    cellsList.add(customObjQ1);
+                    cellsList = new ArrayList<String>();
+                    cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
             } else {
                 units.put(cell, tripCount);
-                TreeSet<CustomObjQuery1> cellsList = maxValues.get(tripCount);
+                ArrayList<String> cellsList = maxValues.get(tripCount);
                 if (cellsList != null) {
                     if(cellsList.size()==10)
-                        cellsList.remove(cellsList.last());
-                    cellsList.add(customObjQ1);//Since we use HashSet we need not worry about duplicates here.
+                        cellsList.remove(0);
+                    cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
                     //Since we have a non-null reference here, we need not to put it back to the TreeMap.
                 } else {
-                    cellsList = new TreeSet<CustomObjQuery1>(new Comparator<CustomObjQuery1>() {
-
-                        public int compare(CustomObjQuery1 o1, CustomObjQuery1 o2) {
-                            return (o2.getCount()).compareTo(o1.getCount());
-                        }
-                    });
-                    cellsList.add(customObjQ1);
+                    cellsList = new ArrayList<String>();
+                    cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
             }
@@ -124,39 +109,50 @@ public class MaxKStoreForStreamProcessor {
         //18-->[146.164]
         //8-->[144.162,147.168,144.165,146.168]
 
+        Set<Map.Entry<Integer, ArrayList<String>>> entrySet = ((TreeMap)maxValues).entrySet();
+        Iterator<Map.Entry<Integer, ArrayList<String>>> itr = entrySet.iterator();
 
-        Set<Integer> keySet = maxValues.keySet();//The keyset is the number of unique appearances
-        Iterator<Integer> itr = keySet.iterator();
-
-        int currentKey = 0;
+        Map.Entry<Double, ArrayList<String>> currentEntry = null;
         int cntr = 0;
         LinkedList<String> result = new LinkedList<String>();
 
         while(itr.hasNext()){
-            currentKey = itr.next();
-            TreeSet<CustomObjQuery1> currentCells = maxValues.get(currentKey);
+        	ArrayList<String> currentCells = itr.next().getValue();
 
-            int currentCellSize = currentCells.size();
-            if(currentCellSize > 0){
-                Iterator<CustomObjQuery1> itr2 = currentCells.iterator();
-
-                while(itr2.hasNext()){
-                    result.add(itr2.next().getCellID());
+//            int currentCellSize = currentCells.size();
+//            if(currentCellSize > 0){
+//                Iterator<String> itr2 = currentCells.iterator();
+//
+//                while(itr2.hasNext()){
+//                    result.add(itr2.next());
+//                    cntr++;
+//
+//                    if(cntr > k){ //We need to select only the top k most frequent cells only
+//                        break;
+//                    }
+//                }
+//
+//            }
+        	
+        	int currentCellSize = currentCells.size();
+        	
+        	if(currentCells.size() > 0){
+        		
+        		for (int i = currentCellSize - 1; i >= 0; i--) {
+                    result.add(currentCells.get(i));
                     cntr++;
 
-                    if(cntr > k){ //We need to select only the top k most frequent cells only
-                        break;
-                    }
-                }
-
-            }
+        			if(cntr > k){ //We need to select only the top k most frequent cells only
+        				break;
+        			}
+        		}
+        	}
 
             if(cntr > k){
                 break;
             }
         }
 
-        // Returns the pressure readings that are sorted in descending order according to the key (pressure value).
         return result;
 
     }
