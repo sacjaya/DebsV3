@@ -38,7 +38,7 @@ import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -146,7 +146,7 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
 
 
-        HashSet<String> currentTopK;
+        LinkedList<String> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
         currentTopK = maxKStore.getMaxK(startCellValue+":"+endCellValue, isCurrent, kValue);

@@ -1,4 +1,4 @@
-package org.wso2.siddhi.debs.extensions.cellId;
+package org.wso2.siddhi.debs2015.extensions.cellId;
 
 import org.apache.log4j.Logger;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;

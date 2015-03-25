@@ -24,7 +24,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreForStreamProcessor {
     private Map<String, Integer> units = new ConcurrentHashMap<String, Integer>(); //The units Map keeps the trip count for each and every cell. The index is based on the cell ID.
-    private Map<Integer, HashSet<String>> maxValues  = new TreeMap<Integer, HashSet<String>>(); //The maxValues Map keeps records for each trip count. The index is based on the trip count.
+    private Map<Integer, LinkedList<String>> maxValues  = new TreeMap<Integer, LinkedList<String>>(new Comparator<Integer>() {
+
+        public int compare(Integer o1, Integer o2) {
+            return o2.compareTo(o1);
+        }
+    });
     //private int eventCounter = 0;
     
 
@@ -37,7 +42,7 @@ public class MaxKStoreForStreamProcessor {
      * @params date - The timestamp the pressure reading was produced.
      *
      */
-    public synchronized HashSet<String> getMaxK(String cell, boolean isCurrent, int k) {
+    public LinkedList<String> getMaxK(String cell, boolean isCurrent, int k) {
 //          eventCounter++;
 //          
 //          if(eventCounter % 200000 == 0){
@@ -54,14 +59,13 @@ public class MaxKStoreForStreamProcessor {
         } else {
             tripCount--;
         }
-    	
+
         if(tripCount==0){
-        	//We have to make sure that the units contains the cell id we are looking for. Otherwise we may get a NullPointerException.
-        	if (units.containsKey(cell)) {
-                Integer previousCount = units.get(cell);
-                units.remove(cell);
-                maxValues.get(previousCount).remove(cell);
-        	}
+        	Integer previousCount= units.remove(cell);
+
+            if (previousCount!=null) {
+                maxValues.get(previousCount).removeFirst();
+            }
         } else {
         	//Here we have a non-zero trip count.
         	
@@ -73,34 +77,35 @@ public class MaxKStoreForStreamProcessor {
         	
         	
         	Integer kkey = units.get(cell);
-        	
-        	
-            if ((kkey!=null)&&(kkey != -1)) {
+
+
+            if ((kkey!=null)) {
                 Integer previousCount = units.get(cell);
-                if(previousCount != tripCount){
-                	units.put(cell, tripCount);
-                	maxValues.get(previousCount).remove(cell);
-                }
-                HashSet<String> cellsList = maxValues.get(tripCount);
+
+                units.put(cell, tripCount);
+                maxValues.get(previousCount).remove(cell);
+                LinkedList<String> cellsList = maxValues.get(tripCount);
+
                 if (cellsList != null) {
                     cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
                 } else {
-                    cellsList = new HashSet<String>();
+                    cellsList = new LinkedList<String>();
                     cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
-            } else if((kkey==null)||(kkey == -1)) {
+            } else {
                 units.put(cell, tripCount);
-                HashSet<String> cellsList = maxValues.get(tripCount);
+                LinkedList<String> cellsList = maxValues.get(tripCount);
                 if (cellsList != null) {
                     cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
                     //Since we have a non-null reference here, we need not to put it back to the TreeMap.
                 } else {
-                    cellsList = new HashSet<String>();
+                    cellsList = new LinkedList<String>();
                     cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
             }
+
         }
 
         //By this point we expect to have a TreeMap which has keys corresponding to the number of 
@@ -111,25 +116,26 @@ public class MaxKStoreForStreamProcessor {
         //26-->[140.158,145.165,144.164]
         //18-->[146.164]
         //8-->[144.162,147.168,144.165,146.168]
-        
+
+
         Set<Integer> keySet = maxValues.keySet();//The keyset is the number of unique appearances
         Iterator<Integer> itr = keySet.iterator();
                
         int currentKey = 0;
         int cntr = 0;
-        HashSet<String> result = new HashSet<String>();
+        LinkedList<String> result = new LinkedList<String>();
         
         while(itr.hasNext()){
         	currentKey = itr.next();
-        	HashSet<String> currentCells = maxValues.get(currentKey);
-        	
-        	if(currentCells.size() > 0){
-        		Iterator<String> itr2 = currentCells.iterator();
-        		
-        		while(itr2.hasNext()){
-        			result.add(itr2.next());
-        			cntr++;
-        			
+            LinkedList<String> currentCells = maxValues.get(currentKey);
+
+            int currentCellSize = currentCells.size();
+        	if(currentCellSize > 0){
+
+                for (int i = currentCellSize - 1; i >= 0; i--) {
+                    result.add(currentCells.get(i));
+                    cntr++;
+
         			if(cntr > k){ //We need to select only the top k most frequent cells only
         				break;
         			}
