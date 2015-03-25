@@ -12,7 +12,6 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
-import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerQuery1;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
 
@@ -24,7 +23,7 @@ import java.util.*;
 
 public class EmptyTaxiStreamProcessor extends StreamProcessor {
 
-    private static final Logger LOGGER = Logger.getLogger(MaxKTimeTransformerQuery1.class);
+    private static final Logger LOGGER = Logger.getLogger(EmptyTaxiStreamProcessor.class);
     private boolean debugEnabled = false;
 
     private String endCell = "";
