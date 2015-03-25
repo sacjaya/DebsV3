@@ -30,6 +30,8 @@ import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreCopy;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -192,9 +194,12 @@ public class MaxKTimeTransformerQuery1 extends StreamFunctionProcessor {
 
         //Map<Long, List<String>> currentTopK;
         
-        HashSet<String> currentTopK;
+        //LinkedHashSet<String> currentTopK;
+        
+        LinkedList<String> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
+        //System.out.println("--->"+startCellValue+":"+endCellValue+eventKeyValue.intValue());
         currentTopK = maxKStore.getMaxK(startCellValue+":"+endCellValue, eventKeyValue.intValue(), kValue);
 
         //From here onwards we prepare the output data tuple from this operator.

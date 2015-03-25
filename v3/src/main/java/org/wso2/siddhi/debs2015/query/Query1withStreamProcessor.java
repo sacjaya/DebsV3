@@ -157,9 +157,9 @@ public class Query1withStreamProcessor {
             long latency = 0;
             @Override
             public void receive(Event[] events) {
-                    EventPrinter.print(events);
-                count = count+events.length;
-                System.out.println("*************************"+count);
+                    //EventPrinter.print(events);
+                //count = count+events.length;
+                //System.out.println("*************************"+count);
 
                 	/*
                     for (Event evt : events) {
@@ -200,9 +200,9 @@ public class Query1withStreamProcessor {
 //            sendEventsFromQueue(inputHandler);
 
         if(performanceLoggingFlag){
-            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput(aggregateInputList);
+            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput("query1-with-streamprocessor", aggregateInputList);
             performanceMonitorInputThread.start();
-            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput(aggregateOutputList);
+            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput("query1-with-streamprocessor", aggregateOutputList);
             performanceMonitorOutputThread.start();
         }
 

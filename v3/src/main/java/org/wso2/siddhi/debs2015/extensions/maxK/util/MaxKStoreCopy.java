@@ -19,18 +19,36 @@
 package org.wso2.siddhi.debs2015.extensions.maxK.util;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreCopy {
     private Map<String, Integer> units = new ConcurrentHashMap<String, Integer>(); //The units Map keeps the trip count for each and every cell. The index is based on the cell ID.
-    private Map<Integer, HashSet<String>> maxValues  = new TreeMap<Integer, HashSet<String>>(); //The maxValues Map keeps records for each trip count. The index is based on the trip count.
-    //private int eventCounter = 0;
+    private Map<Integer, LinkedList<String>> maxValues  = new TreeMap<Integer, LinkedList<String>>(new Comparator<Integer>() {
+
+        public int compare(Integer o1, Integer o2) {
+           return o2.compareTo(o1);
+        }
+    }); //Here we use a custom comparator so that we can order the elements in the descending order.
+    
+    int eventCounter = 0;
+    
+    //The maxValues Map keeps records for each trip count. The index is based on the trip count.
+//    Comparator<Integer> comparator = new Comparator<Integer>() {
+//
+//        public int compare(Integer o1, Integer o2) {
+//           return o1.compareTo(o2);
+//        }
+//    };
     
 
     /**
@@ -42,20 +60,16 @@ public class MaxKStoreCopy {
      * @params date - The timestamp the pressure reading was produced.
      *
      */
-    public synchronized HashSet<String> getMaxK(String cell, int tripCount, int k) {
-//          eventCounter++;
-//          
-//          if(eventCounter % 200000 == 0){
-//          	System.out.println("Number of records in the window : " + maxValues.size());
-//          	System.out.println("Number of records in the units HashMap : " + units.size());
-//          }
-    	
+    public synchronized LinkedList<String> getMaxK(String cell, int tripCount, int k) {    	
         if(tripCount==0){
         	//We have to make sure that the units contains the cell id we are looking for. Otherwise we may get a NullPointerException.
-        	if (units.containsKey(cell)) {
-                Integer previousCount = units.get(cell);
-                units.remove(cell);
-                maxValues.get(previousCount).remove(cell);
+        	Integer previousCount= units.remove(cell);
+        	
+        	if (previousCount!=null) {
+        		//The first item we entered the cell list should be removed first. 
+        		//Because it will get expired first. So when ever we get an event expiration, we
+        		//remove the first item in the list corresponding to that count.
+        		maxValues.get(previousCount).removeFirst();
         	}
         } else {
         	//Here we have a non-zero trip count.
@@ -66,32 +80,43 @@ public class MaxKStoreCopy {
         	//The maxValues TreeMap holds the list of cells for each count.
         	//"units" is an index of which the key is the cell ID and the value is the count.
         	
-        	
         	Integer kkey = units.get(cell);
         	
-        	
             if ((kkey!=null)&&(kkey != -1)) {
+            	//We already had a trip count for this particular route previously.
                 Integer previousCount = units.get(cell);
+                
                 if(previousCount != tripCount){
                 	units.put(cell, tripCount);
+                	//Although we can remove the first element from the list when an event gets 
+                	//expired, we cannot do that here, because we are just updating an existing
+                	//trip count.
                 	maxValues.get(previousCount).remove(cell);
                 }
-                HashSet<String> cellsList = maxValues.get(tripCount);
+                
+                LinkedList<String> cellsList = maxValues.get(tripCount);
+                
                 if (cellsList != null) {
-                    cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
+                	//We do not have to check whether we have a duplicate here. Because by default we remove
+                	//elements from the TreeMap before we add a new record.
+                    cellsList.add(cell);
                 } else {
-                    cellsList = new HashSet<String>();
+                    cellsList = new LinkedList<String>();
                     cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
             } else if((kkey==null)||(kkey == -1)) {
+            	//We do not have a trip count for this particular route. We have to add everything
+            	//from the beginning. First, we add the route to units Map. Then we add a record
+            	//in the maxValues TreeMap.
                 units.put(cell, tripCount);
-                HashSet<String> cellsList = maxValues.get(tripCount);
+                LinkedList<String> cellsList = maxValues.get(tripCount);
+                
                 if (cellsList != null) {
-                    cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
-                    //Since we have a non-null reference here, we need not to put it back to the TreeMap.
+                	//Again we need not to worry whether we already had stored the route in the LinkedList.
+                	cellsList.add(cell);
                 } else {
-                    cellsList = new HashSet<String>();
+                    cellsList = new LinkedList<String>();
                     cellsList.add(cell);
                     maxValues.put(tripCount, cellsList);
                 }
@@ -107,16 +132,80 @@ public class MaxKStoreCopy {
         //18-->[146.164]
         //8-->[144.162,147.168,144.165,146.168]
         
-        Set<Integer> keySet = maxValues.keySet();//The keyset is the number of unique appearances
+        Set<Integer> keySet = ((TreeMap)maxValues).keySet();//The keyset is the number of unique appearances
         Iterator<Integer> itr = keySet.iterator();
+        
+        
                
         int currentKey = 0;
         int cntr = 0;
-        HashSet<String> result = new HashSet<String>();
+        LinkedList<String> result = new LinkedList<String>();
+        
+        eventCounter++;
+        
+        if(eventCounter % 10000 == 0){
+        	Iterator<Integer> itr3 = keySet.iterator();
+        
+            while(itr3.hasNext()){
+            	currentKey = itr3.next();
+            	int routeCount = ((Map<Integer, LinkedList<String>>)maxValues).get(currentKey).size();
+            	
+            	if(routeCount != 0){
+            		System.out.print(currentKey + "," + routeCount + ",");
+            	}
+            }
+            
+            System.out.println();
+        }
+        
+        currentKey = 0;
         
         while(itr.hasNext()){
         	currentKey = itr.next();
-        	HashSet<String> currentCells = maxValues.get(currentKey);
+        	
+        	LinkedList<String> currentCells = maxValues.get(currentKey);
+        	//System.out.println("currentKey:"+currentKey+"--->currentListSize:"+currentCells.size());
+        	/*
+        	if(currentCells.size() > 0){
+        		Iterator<String> itr2 = currentCells.iterator();
+        		        		
+        		//We need to reverse the order of the list of items stored in the LinkedHashSet so 
+        		//that the last inserted cell will be the first item in the new list.
+        		Stack stk = new Stack();
+        		
+        		while(itr2.hasNext()){
+        			stk.push(itr2.next());
+        		}
+        		
+        		//Once we are done with reversing the order, we use the data from the Stack to fill 
+        		//the result list until we have got top-K items
+        		while(!stk.isEmpty()){
+        			result.add((String) stk.pop());
+        			cntr++;
+        			
+        			if(cntr > k){
+        				break;
+        			}
+        		}
+        	}
+        	*/
+        	
+        	/*
+        	if(currentCells.size() > 0){
+        		LinkedList<String> list = new LinkedList<String>(currentCells);
+        		
+        		Iterator<String> itr2 = list.descendingIterator();
+        		//Iterator<String> itr2 = currentCells.iterator();
+        		
+        		while(itr2.hasNext()){
+        			result.add(itr2.next());
+        			cntr++;
+        			
+        			if(cntr > k){ //We need to select only the top k most frequent cells only
+        				break;
+        			}
+        		}
+        	}*/
         	
         	if(currentCells.size() > 0){
         		Iterator<String> itr2 = currentCells.iterator();
@@ -131,10 +220,13 @@ public class MaxKStoreCopy {
         		}
         	}
         	
+        	//Just to makesure we exit from iterating the TreeMap structure once we found the top-K number of cells.
 			if(cntr > k){
 				break;
 			}
         }
+        
+        //System.out.println("+++++++++++++++++++++++++++++++++++++++++++++");
         
         // Returns the pressure readings that are sorted in descending order according to the key (pressure value).
         return result;

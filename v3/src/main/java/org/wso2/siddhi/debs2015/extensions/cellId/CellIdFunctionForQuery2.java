@@ -1,8 +1,7 @@
-package org.wso2.siddhi.debs2015.extensions.cellId;
+package org.wso2.siddhi.debs.extensions.cellId;
 
 import org.apache.log4j.Logger;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
-import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.executor.function.FunctionExecutor;
 import org.wso2.siddhi.query.api.definition.Attribute;
@@ -24,20 +23,50 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
     private float  latitudeDifference = northMostLatitude-southMostLatitude ;
     private short  gridResolution = 600; //This is the number of cells per side in the square of the simulated area.
 
-    public void init(Attribute.Type[] attributeTypes, SiddhiContext siddhiContext) {
+    @Override
+    protected void init(ExpressionExecutor[] expressionExecutors, ExecutionPlanContext executionPlanContext) {
 
     }
 
-    protected Object process(Object data) {
-    	return null;
-    }
+    @Override
+    protected Object execute(Object[] objects) {
+        //--------------------------------------------------          The following is for longitude -------------------------------------
 
-    public void destroy() {
+        float inputLongitude = Float.parseFloat(String.valueOf(((Object[])objects)[0]));
+        //+Miyuru: better to declare the variable as short so that we can save memory
+        //int cellIdFirstComponent;
+        short cellIdFirstComponent;
 
-    }
+        if(westMostLongitude==inputLongitude){
+            cellIdFirstComponent= gridResolution;
+        } else {
+            cellIdFirstComponent = (short) ((((eastMostLongitude - inputLongitude) / longitudeDifference) * gridResolution) + 1);
+        }
 
-    public Attribute.Type getReturnType() {
-        return Attribute.Type.STRING;
+        //+Miyuru: Why don't we simply return null if the cell is out of the permitted range?
+        //that way we can avoid creating additional String literals "-".
+        if(cellIdFirstComponent<0 ||cellIdFirstComponent>gridResolution){
+            return "-";
+        }
+
+
+        //--------------------------------------------------          The following is for latitude -------------------------------------
+        float inputLatitude = Float.parseFloat(String.valueOf(((Object[])objects)[1]));
+
+        //int cellIdSecondComponent;
+        short cellIdSecondComponent;
+
+        if(southMostLatitude==inputLatitude){
+            cellIdSecondComponent= gridResolution;
+        } else {
+            cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
+        }
+
+        if(cellIdSecondComponent<0 ||cellIdSecondComponent>gridResolution){
+            return "-";
+        }
+
+        return cellIdFirstComponent+"."+cellIdSecondComponent;
     }
 
     @Override
@@ -53,6 +82,10 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
 
     }
 
+    public Attribute.Type getReturnType() {
+        return  Attribute.Type.STRING;
+    }
+
     public Object[] currentState() {
         return new Object[0];
     }
@@ -61,55 +94,5 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
 
     }
 
-	@Override
-    protected void init(ExpressionExecutor[] attributeExpressionExecutors,
-                        ExecutionPlanContext executionPlanContext) {
-	    
-    }
 
-	@Override
-    protected Object execute(Object[] data) {
-    	//--------------------------------------------------          The following is for longitude -------------------------------------
-    	
-        //float inputLongitude = Float.parseFloat(String.valueOf(((Object[])data)[0]));
-    	//float inputLongitude = Float.parseFloat(((Object[])data)[0].toString());
-    	float inputLongitude = (Float)(((Object[])data)[0]);
-        //+Miyuru: better to declare the variable as short so that we can save memory
-        //int cellIdFirstComponent;
-        short cellIdFirstComponent;
-        
-        if(westMostLongitude==inputLongitude){
-            cellIdFirstComponent= gridResolution;
-        } else {
-            cellIdFirstComponent = (short) ((((eastMostLongitude - inputLongitude) / longitudeDifference) * gridResolution) + 1);
-        }
-        
-        //+Miyuru: Why don't we simply return null if the cell is out of the permitted range?
-        //that way we can avoid creating additional String literals "-".
-        if(cellIdFirstComponent<0 ||cellIdFirstComponent>gridResolution){
-            //return "-";
-        	return null;
-        }
-
-        
-        //--------------------------------------------------          The following is for latitude -------------------------------------
-        //float inputLatitude = Float.parseFloat(String.valueOf(((Object[])data)[1]));
-        float inputLatitude = (Float)(((Object[])data)[1]);
-        
-        //int cellIdSecondComponent;
-        short cellIdSecondComponent;
-        
-        if(southMostLatitude==inputLatitude){
-            cellIdSecondComponent= gridResolution;
-        } else {
-            cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
-        }
-        
-        if(cellIdSecondComponent<0 ||cellIdSecondComponent>gridResolution){
-            //return "-";
-        	return null;
-        }
-        
-        return cellIdFirstComponent+"."+cellIdSecondComponent;
-    }
 }

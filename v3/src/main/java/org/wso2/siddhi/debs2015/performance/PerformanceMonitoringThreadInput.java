@@ -22,9 +22,11 @@ public class PerformanceMonitoringThreadInput extends Thread {
 	FileWriter fw = null;
 	BufferedWriter bw = null;
 	private LinkedBlockingQueue<String> aggregateInputList;
+	private String preamble;
 	
-	public PerformanceMonitoringThreadInput(LinkedBlockingQueue<String> aggregateInputList){
+	public PerformanceMonitoringThreadInput(String name, LinkedBlockingQueue<String> aggregateInputList){
 		this.aggregateInputList = aggregateInputList;
+		this.preamble = name;
 	}
 	
 	public void run(){
@@ -34,7 +36,7 @@ public class PerformanceMonitoringThreadInput extends Thread {
 		String timeStamp = ft.format(dNow);
 		String statisticsDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
 		try {
-            fw = new FileWriter(new File(statisticsDir + "/input-stats-" + timeStamp + ".csv").getAbsoluteFile());
+            fw = new FileWriter(new File(statisticsDir + "/" + preamble + "-input-stats-" + timeStamp + ".csv").getAbsoluteFile());
 			bw = new BufferedWriter(fw);
 			bw.write("time from start(ms),time from start(s),aggregate throughput (events/s),throughput in this time window (events/s),percentage completed (%)\r\n");
         } catch (IOException e1) {

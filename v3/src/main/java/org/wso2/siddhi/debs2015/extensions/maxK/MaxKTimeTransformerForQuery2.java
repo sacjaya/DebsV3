@@ -31,6 +31,7 @@ import org.wso2.siddhi.query.api.definition.Attribute;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreCopy;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -183,27 +184,29 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
         Object emptyTaxiCountValue = object[2];
         String cellValue = (String) object[3];
 
-        Map<Double, List<CustomObj>> currentTopK;
+        //Map<Double, List<CustomObj>> currentTopK;
+        LinkedList<CustomObj> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
 
-        currentTopK = maxKStoreQuery2.getMaxK(new CustomObj(cellValue,eventKeyValue,profitValue,emptyTaxiCountValue));
+        currentTopK = maxKStoreQuery2.getMaxK(new CustomObj(cellValue,eventKeyValue,profitValue,emptyTaxiCountValue), kValue);
 
         //From here onwards we prepare the output data tuple from this operator.
         int position = 0;
 
-        for(List<CustomObj> cellList: currentTopK.values()){
+        for(CustomObj customObj: currentTopK){
             //We do this until top-k is 10 (kValue==10)
-            for (int i = cellList.size()-1 ; i >= 0 ; i--){
-                CustomObj customObj = cellList.get(i);
+            //for (int i = cellList.size()-1 ; i >= 0 ; i--){
+                //CustomObj customObj = cellList.get(i);
                 data[position++] = customObj.getCellID();//profitable_cell_id_
                 data[position++] = customObj.getEmptyTaxiCount();//empty_taxies_in_cell_id_
                 data[position++] = customObj.getProfit();//median_profit_in_cell_id_
                 data[position++] = customObj.getProfit_per_taxi();//profitability_of_cell_
+                
                 if(position>=kValue*4){
                     break;
                 }
-            }
+            //}
 
             if(position>=kValue*4){
                 break;

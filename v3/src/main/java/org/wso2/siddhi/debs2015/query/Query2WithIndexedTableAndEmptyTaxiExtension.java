@@ -240,9 +240,9 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 //            sendEventsFromQueue(inputHandler);
 
         if(performanceLoggingFlag){
-            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput(aggregateInputList);
+            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput("Query2-WithIndexedTableAndEmptyTaxiExtension", aggregateInputList);
             performanceMonitorInputThread.start();
-            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput(aggregateOutputList);
+            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput("Query2-WithIndexedTableAndEmptyTaxiExtension", aggregateOutputList);
             performanceMonitorOutputThread.start();
         }
 

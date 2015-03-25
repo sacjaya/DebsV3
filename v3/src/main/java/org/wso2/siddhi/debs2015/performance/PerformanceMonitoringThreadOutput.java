@@ -32,9 +32,11 @@ public class PerformanceMonitoringThreadOutput extends Thread {
 	private Timer timer;
 	private int recordCount;
 	private int TIMER_TICKING_INTERVAL = 2;//The timer's tick interval in seconds.
+	private String preamble;
 	
-	public PerformanceMonitoringThreadOutput(LinkedBlockingQueue<String> aggregateOutputList){
+	public PerformanceMonitoringThreadOutput(String name, LinkedBlockingQueue<String> aggregateOutputList){
 		this.aggregateOutputList = aggregateOutputList;
+		this.preamble = name;
 	}
 	
 	public int getRecordCount(){
@@ -48,7 +50,7 @@ public class PerformanceMonitoringThreadOutput extends Thread {
 		String timeStamp = ft.format(dNow);
 		String statisticsDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
 		try {
-            fw = new FileWriter(new File(statisticsDir + "/output-stats-" + timeStamp + ".csv").getAbsoluteFile());
+            fw = new FileWriter(new File(statisticsDir + "/" + preamble + "-output-stats-" + timeStamp + ".csv").getAbsoluteFile());
 			bw = new BufferedWriter(fw);
 			bw.write("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s)\r\n");
         } catch (IOException e1) {

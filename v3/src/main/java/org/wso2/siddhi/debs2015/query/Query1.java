@@ -48,6 +48,7 @@ public class Query1 {
 	public void run(){
 		//Load the configurations
 		final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
+		final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
 		
 		if(performanceLoggingFlag){
 			System.out.println("Performance information collection and logging is enabled.");
@@ -109,6 +110,11 @@ public class Query1 {
                 "select startCellNo , endCellNo, pickup_datetime, dropoff_datetime, count(startCellNo) as tripCount, pickup_datetime_org, dropoff_datetime_org, iij_timestamp " +
                 "group by startCellNo endCellNo " +
                 "insert all events  into countStream ;";
+        
+//        String query333 =   "@info(name = 'query333') " +
+//                "from expiredStream " +
+//                "select startCellNo , endCellNo, pickup_datetime, dropoff_datetime, tripCount, pickup_datetime_org, dropoff_datetime_org, -1f as iij_timestamp " +
+//                 "insert expired events  into countStream ;";
 
 
         String query4 = "@info(name = 'query4') " +
@@ -133,51 +139,62 @@ public class Query1 {
         //The attribute “delay” captures the time delay between reading the input event that triggered the output and the time when the output
         //is produced. Participants must determine the delay using the current system time right after reading the input and right before writing
         //the output. This attribute will be used in the evaluation of the submission.
-
-            executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
-                long count = 1;
-                long totalLatency = 0;
-                long latencyFromBegining = 0;
-                long latencyWithinEventCountWindow = 0;
-                long startTime = System.currentTimeMillis();
-                long timeDifferenceFromStart = 0;
-                long timeDifference = 0; //This is the time difference for this time window.
-                long currentTime = 0;
-                long prevTime = 0;
-                long latency = 0;
-                @Override
-                public void receive(Event[] events) {
-                    //EventPrinter.print(events);
-                	/*
-                    for (Event evt : events) {
-                    	Object[] data = evt.getData();
-                        currentTime = System.currentTimeMillis();
-                        long eventOriginationTime = (Long) data[22];
-                        latency = currentTime - eventOriginationTime;
-                        
+                
+        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+            long count = 1;
+            long totalLatency = 0;
+            long latencyFromBegining = 0;
+            long latencyWithinEventCountWindow = 0;
+            long startTime = System.currentTimeMillis();
+            long timeDifferenceFromStart = 0;
+            long timeDifference = 0; //This is the time difference for this time window.
+            long currentTime = 0;
+            long prevTime = 0;
+            long latency = 0;
+            @Override
+            public void receive(Event[] events) {
+            	
+                //EventPrinter.print(events);
+            	currentTime = System.currentTimeMillis();
+                for (Event evt : events) {
+                	//If the printoutput flag is set, we need to print the output.
+                	
+                	
+                	Object[] data = evt.getData();
+                    long eventOriginationTime = (Long) data[22];
+                    latency = eventOriginationTime==-1l ? -1l:(currentTime - eventOriginationTime);
+                    
+                    if(printOutputFlag){
                         for(int i=0;i < 22; i++){
                         	System.out.print(data[i] + ",");
                         }
                         
                         System.out.println(latency);
-                        
-                        
+                	}
+                	
+                	//If the performance logging flag is set, we need to print the performance measurements.
+                	if(performanceLoggingFlag){
                         latencyWithinEventCountWindow += latency;
                         latencyFromBegining += latency;
-
+    
                         if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
                             timeDifferenceFromStart = currentTime - startTime;
                             timeDifference = currentTime - prevTime;
-                            //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)>
-                            aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference));
+                            
+                            if(timeDifference!=0){
+                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)>
+                                aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference));
+                            }
                             prevTime = currentTime;
                             latencyWithinEventCountWindow = 0;
                         }
+                    
                         count++;
-                        */
-                    //}
+                	}
                 }
-            });
+                
+            }
+        });
 
            executionPlanRuntime.start();
 //            //startMonitoring();
@@ -187,9 +204,9 @@ public class Query1 {
 //            sendEventsFromQueue(inputHandler);
             
             if(performanceLoggingFlag){
-            	PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput(aggregateInputList);
+            	PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput("query1", aggregateInputList);
             	performanceMonitorInputThread.start();
-            	PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput(aggregateOutputList);
+            	PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput("query1", aggregateOutputList);
             	performanceMonitorOutputThread.start();
             }
             

@@ -1,6 +1,7 @@
 package org.wso2.siddhi.debs2015.query;
 
 import com.google.common.base.Splitter;
+
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
@@ -47,6 +48,7 @@ public class Query2WithIndexedTable {
     public void run(){
         //Load the configurations
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
+        final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
 
         if(performanceLoggingFlag){
             System.out.println("Performance information collection and logging is enabled.");
@@ -187,8 +189,8 @@ public class Query2WithIndexedTable {
 
 
 
+        //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query5+query6+query7+query8+query9+query10);
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query5+query6+query7+query8+query9+query10);
-
 
         //Note: If less than 10 cells can be identified within the last 30 min, then NULL is to be output for all others that lack data.
 
@@ -196,7 +198,8 @@ public class Query2WithIndexedTable {
         //is produced. Participants must determine the delay using the current system time right after reading the input and right before writing
         //the output. This attribute will be used in the evaluation of the submission.
 
-        executionPlanRuntime.addCallback("profitOutputStream", new StreamCallback() {
+        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
+        	/*
             long count = 1;
             long totalLatency = 0;
             long latencyFromBegining = 0;
@@ -210,10 +213,10 @@ public class Query2WithIndexedTable {
             long gggg= System.currentTimeMillis();
             @Override
             public void receive(Event[] events) {
-                count = count+events.length;
+                //count = count+events.length;
 //                EventPrinter.print(events);
 //                long ss = System.currentTimeMillis() - gggg;
-                System.out.println("*************************"+count);
+                //System.out.println("*************************"+count);
 
 //                    for (Event evt : events) {
 //                        currentTime = System.currentTimeMillis();
@@ -232,7 +235,58 @@ public class Query2WithIndexedTable {
 //                        }
 //                        count++;
 //                    }
+            }*/
+        	
+            long count = 1;
+            long totalLatency = 0;
+            long latencyFromBegining = 0;
+            long latencyWithinEventCountWindow = 0;
+            long startTime = System.currentTimeMillis();
+            long timeDifferenceFromStart = 0;
+            long timeDifference = 0; //This is the time difference for this time window.
+            long currentTime = 0;
+            long prevTime = 0;
+            long latency = 0;
+            @Override
+            public void receive(Event[] events) {    
+            	/*
+            	currentTime = System.currentTimeMillis();
+            	
+            	
+                for (Event evt : events) {
+                    Object[] data = evt.getData();
+    
+                    long eventOriginationTime = (Long) data[42];
+                    latency = eventOriginationTime==-1l ? -1l:(currentTime - eventOriginationTime);
+                    
+                    if(printOutputFlag){
+                        for(int i=0;i < 41; i++){
+                        	System.out.print(data[i] + ",");
+                        }
+                        
+                        System.out.println(latency);
+                    }
+            	
+            	    if(performanceLoggingFlag){
+                        latencyWithinEventCountWindow += latency;
+                        latencyFromBegining += latency;
+    
+                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                            timeDifferenceFromStart = currentTime - startTime;
+                            timeDifference = currentTime - prevTime;
+                            if(timeDifference!=0){
+                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)>
+                                aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference));
+                            }
+                            prevTime = currentTime;
+                            latencyWithinEventCountWindow = 0;
+                        }
+                        count++;
+                    }
+            	}
+            	*/
             }
+            
         });
 
         executionPlanRuntime.start();
@@ -243,9 +297,9 @@ public class Query2WithIndexedTable {
 //            sendEventsFromQueue(inputHandler);
 
         if(performanceLoggingFlag){
-            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput(aggregateInputList);
+            PerformanceMonitoringThreadInput performanceMonitorInputThread = new PerformanceMonitoringThreadInput("query2withindextable", aggregateInputList);
             performanceMonitorInputThread.start();
-            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput(aggregateOutputList);
+            PerformanceMonitoringThreadOutput performanceMonitorOutputThread = new PerformanceMonitoringThreadOutput("query2withindextable", aggregateOutputList);
             performanceMonitorOutputThread.start();
         }
 

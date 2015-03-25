@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MaxKStoreQuery2 {
     //Holds the Max K readings
     private Map<String, Double> units = new ConcurrentHashMap<String, Double>();
-    private Map<Double, List<CustomObj>> maxValues  = new TreeMap<Double, List<CustomObj>>();
+    private Map<Double, LinkedList<CustomObj>> maxValues  = new TreeMap<Double, LinkedList<CustomObj>>();
     //No of data to be held in the Map: The value of K
 
     /**
@@ -36,9 +36,10 @@ public class MaxKStoreQuery2 {
      * @params date - The timestamp the pressure reading was produced.
      *
      */
-    public synchronized Map<Double, List<CustomObj>> getMaxK(CustomObj customObj) {
+    public synchronized LinkedList<CustomObj> getMaxK(CustomObj customObj, int k) {
         String cell = customObj.getCellID();
         Double count = (Double) customObj.getProfit_per_taxi();
+        
         if(count==0){
         	//We have to make sure that the units contains the cell id we are looking for. Otherwise we may get a NullPointerException.
         	if (units.containsKey(cell)) {
@@ -57,29 +58,66 @@ public class MaxKStoreQuery2 {
                 Double previousCount = units.get(cell);
                 units.put(cell, count);
                 maxValues.get(previousCount).remove(customObj);
-                List<CustomObj> cellsList = maxValues.get(count);
+                LinkedList<CustomObj> cellsList = maxValues.get(count);
+                
                 if (cellsList != null) {
                     cellsList.add(customObj);
                 } else {
-                    cellsList = new ArrayList<CustomObj>();
+                    cellsList = new LinkedList<CustomObj>();
                     cellsList.add(customObj);
                     maxValues.put(count, cellsList);
                 }
             } else {
                 units.put(cell, count);
-                List<CustomObj> cellsList = maxValues.get(count);
+                LinkedList<CustomObj> cellsList = maxValues.get(count);
                 if (cellsList != null) {
                     cellsList.add(customObj);
                 } else {
-                    cellsList = new ArrayList<CustomObj>();
+                    cellsList = new LinkedList<CustomObj>();
                     cellsList.add(customObj);
                     maxValues.put(count, cellsList);
                 }
             }
         }
 
+        LinkedList<CustomObj> result = new LinkedList<CustomObj>();
+        Set<Double> keySet = ((TreeMap)maxValues).descendingKeySet();//The keyset is the number of unique appearances
+        Iterator<Double> itr = keySet.iterator();
+               
+        double currentKey = 0.0d;
+        int cntr = 0;
+        
+        while(itr.hasNext()){
+        	currentKey = itr.next();
+        	LinkedList<CustomObj> currentCells = maxValues.get(currentKey);
+        	
+        	if(currentCells.size() > 0){
+        		Iterator<CustomObj> itr2 = currentCells.descendingIterator();
+        		
+        		while(itr2.hasNext()){
+        			result.add(itr2.next());
+        			cntr++;
+        			
+        			if(cntr > k){ //We need to select only the top k most frequent cells only
+        				break;
+        			}
+        		}
+        	}
+        	  	
+        	
+        	//Just to makesure we exit from iterating the TreeMap structure once we found the top-K number of cells.
+			if(cntr > k){
+				break;
+			}
+        	
+        }
+        
+        
+        
+        return result;
+        
         // Returns the pressure readings that are sorted in descending order according to the key (pressure value).
-        return new TreeMap<Double, List<CustomObj>>(maxValues).descendingMap();
+        //return new TreeMap<Double, List<CustomObj>>(maxValues).descendingMap();
 
     }
 
