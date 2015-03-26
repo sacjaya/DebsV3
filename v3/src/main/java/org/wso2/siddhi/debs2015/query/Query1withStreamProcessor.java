@@ -20,6 +20,7 @@
 package org.wso2.siddhi.debs2015.query;
 
 import com.google.common.base.Splitter;
+
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
@@ -29,6 +30,7 @@ import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunction;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKStreamProcessor;
+import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.timeStamp.TimeStampFunction;
 import org.wso2.siddhi.debs2015.input.DataLoderThread;
@@ -64,8 +66,9 @@ public class Query1withStreamProcessor {
 
     public void run(){
         //Load the configurations
-        final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
-
+		final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
+		final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
+		
         if(performanceLoggingFlag){
             System.out.println("Performance information collection and logging is enabled.");
         }else{
@@ -81,7 +84,8 @@ public class Query1withStreamProcessor {
         extensions.put("debs:cellId",CellIdFunction.class);
         extensions.put("debs:getTimestamp", TimeStampFunction.class);
         extensions.put("MaxK:getMaxK", MaxKStreamProcessor.class);
-        extensions.put("debs:median",MedianAggregator.class);
+        //extensions.put("debs:median",MedianAggregator.class);
+        extensions.put("debs:median",BucketingBasedMedianAggregator.class);
 
         siddhiContext.setSiddhiExtensions(extensions);
 
@@ -189,6 +193,47 @@ public class Query1withStreamProcessor {
                         count++;
                         */
                 //}
+            	
+            	/*
+                //EventPrinter.print(events);
+            	currentTime = System.currentTimeMillis();
+                for (Event evt : events) {
+                	//If the printoutput flag is set, we need to print the output.
+                	
+                	
+                	Object[] data = evt.getData();
+                    long eventOriginationTime = (Long) data[22];
+                    latency = eventOriginationTime==-1l ? -1l:(currentTime - eventOriginationTime);
+                    
+                    if(printOutputFlag){
+                        for(int i=0;i < 22; i++){
+                        	System.out.print(data[i] + ",");
+                        }
+                        
+                        System.out.println(latency);
+                	}
+                	
+                	//If the performance logging flag is set, we need to print the performance measurements.
+                	if(performanceLoggingFlag){
+                        latencyWithinEventCountWindow += latency;
+                        latencyFromBegining += latency;
+    
+                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                            timeDifferenceFromStart = currentTime - startTime;
+                            timeDifference = currentTime - prevTime;
+                            
+                            if(timeDifference!=0){
+                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)>
+                                aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference));
+                            }
+                            prevTime = currentTime;
+                            latencyWithinEventCountWindow = 0;
+                        }
+                    
+                        count++;
+                	}
+                }
+                */
             }
         });
 

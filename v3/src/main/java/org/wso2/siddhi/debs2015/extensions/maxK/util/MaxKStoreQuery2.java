@@ -24,7 +24,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MaxKStoreQuery2 {
     //Holds the Max K readings
     private Map<String, Double> units = new ConcurrentHashMap<String, Double>();
-    private Map<Double, LinkedList<CustomObj>> maxValues  = new TreeMap<Double, LinkedList<CustomObj>>();
+    //private Map<Double, LinkedList<CustomObj>> maxValues  = new TreeMap<Double, LinkedList<CustomObj>>();
+    
+    private Map<Double, ArrayList<CustomObj>> maxValues  = new TreeMap<Double, ArrayList<CustomObj>>();
+    
     //No of data to be held in the Map: The value of K
 
     /**
@@ -41,12 +44,14 @@ public class MaxKStoreQuery2 {
         Double count = (Double) customObj.getProfit_per_taxi();
         
         if(count==0){
-        	//We have to make sure that the units contains the cell id we are looking for. Otherwise we may get a NullPointerException.
-        	if (units.containsKey(cell)) {
-                Double previousCount = units.get(cell);
-                units.remove(cell);
-                maxValues.get(previousCount).remove(customObj);
-        	}
+        	//We know by default, if the count==0 for this particular cell, we already have stored this
+        	//cell's information before
+        	Double previousCount = units.remove(cell);
+        	
+            if(previousCount != null){
+            	units.remove(cell);
+            	maxValues.get(previousCount).remove(customObj);
+            }
         } else {
         	//This code basically updates the count per cell. If there is a new value for the count
         	//which is non-zero, the old value is replaced with the new value.
@@ -54,26 +59,29 @@ public class MaxKStoreQuery2 {
         	//The maxValues TreeMap holds the list of cells for each count.
         	//"units" is an index of which the key is the cell ID and the value is the count.
 
-            if (units.containsKey(cell)) {
-                Double previousCount = units.get(cell);
+        	Double kkey = units.get(cell);
+        	
+            if (kkey != null) {
                 units.put(cell, count);
-                maxValues.get(previousCount).remove(customObj);
-                LinkedList<CustomObj> cellsList = maxValues.get(count);
+                
+                maxValues.get(kkey).remove(customObj);
+                
+                ArrayList<CustomObj> cellsList = maxValues.get(count);
                 
                 if (cellsList != null) {
                     cellsList.add(customObj);
                 } else {
-                    cellsList = new LinkedList<CustomObj>();
+                    cellsList = new ArrayList<CustomObj>();
                     cellsList.add(customObj);
                     maxValues.put(count, cellsList);
                 }
             } else {
                 units.put(cell, count);
-                LinkedList<CustomObj> cellsList = maxValues.get(count);
+                ArrayList<CustomObj> cellsList = maxValues.get(count);
                 if (cellsList != null) {
                     cellsList.add(customObj);
                 } else {
-                    cellsList = new LinkedList<CustomObj>();
+                    cellsList = new ArrayList<CustomObj>();
                     cellsList.add(customObj);
                     maxValues.put(count, cellsList);
                 }
@@ -81,44 +89,38 @@ public class MaxKStoreQuery2 {
         }
 
         LinkedList<CustomObj> result = new LinkedList<CustomObj>();
-        Set<Double> keySet = ((TreeMap)maxValues).descendingKeySet();//The keyset is the number of unique appearances
-        Iterator<Double> itr = keySet.iterator();
-               
-        double currentKey = 0.0d;
+        Set<Map.Entry<Double, ArrayList<CustomObj>>> entrySet = ((TreeMap)maxValues).entrySet();//The keyset is the number of unique appearances
+        Iterator<Map.Entry<Double, ArrayList<CustomObj>>> itr = entrySet.iterator();
+        
+        Map.Entry<Double, ArrayList<CustomObj>> currentEntry = null;
         int cntr = 0;
         
         while(itr.hasNext()){
-        	currentKey = itr.next();
-        	LinkedList<CustomObj> currentCells = maxValues.get(currentKey);
+        	currentEntry = itr.next();
+        	ArrayList<CustomObj> currentCells = currentEntry.getValue();
+        	
+        	int currentCellSize = currentCells.size();
         	
         	if(currentCells.size() > 0){
-        		Iterator<CustomObj> itr2 = currentCells.descendingIterator();
         		
-        		while(itr2.hasNext()){
-        			result.add(itr2.next());
-        			cntr++;
-        			
+        		for (int i = currentCellSize - 1; i >= 0; i--) {
+                    result.add(currentCells.get(i));
+                    cntr++;
+
         			if(cntr > k){ //We need to select only the top k most frequent cells only
         				break;
         			}
         		}
         	}
-        	  	
         	
         	//Just to makesure we exit from iterating the TreeMap structure once we found the top-K number of cells.
 			if(cntr > k){
 				break;
 			}
         	
-        }
-        
-        
-        
+        }       
+                
         return result;
-        
-        // Returns the pressure readings that are sorted in descending order according to the key (pressure value).
-        //return new TreeMap<Double, List<CustomObj>>(maxValues).descendingMap();
-
     }
 
 

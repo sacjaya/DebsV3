@@ -32,6 +32,7 @@ import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
+import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreCopy;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreForStreamProcessor;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
@@ -223,7 +224,7 @@ public class MaxKStreamProcessor extends StreamProcessor {
                 (objects[2] instanceof String) && (objects[3] instanceof Integer) &&
                 (objects[4] instanceof String) && (objects[5] instanceof Integer) &&
                 (objects[6] instanceof Integer) &&
-                (objects[7] instanceof MaxKStoreForStreamProcessor) ) {
+                (objects[7] instanceof MaxKStoreCopy) ) {
             //tripCount, startCellNo, endCellNo, 10, iij_timestamp
 
             this.startCell = (String) objects[0];

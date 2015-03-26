@@ -1,6 +1,7 @@
 package org.wso2.siddhi.debs2015.query;
 
 import com.google.common.base.Splitter;
+
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
@@ -10,6 +11,7 @@ import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunctionForQuery2;
 import org.wso2.siddhi.debs2015.extensions.countEmptyTaxi.EmptyTaxiStreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
+import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.timeStamp.TimeStampFunction;
 import org.wso2.siddhi.debs2015.input.DataLoderThread;
@@ -63,7 +65,8 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 
         extensions.put("debs:cellId",CellIdFunctionForQuery2.class);
         extensions.put("debs:getTimestamp", TimeStampFunction.class);
-        extensions.put("debs:median",MedianAggregator.class);
+        //extensions.put("debs:median",MedianAggregator.class);
+        extensions.put("debs:median",BucketingBasedMedianAggregator.class);
         extensions.put("MaxK:getMaxK", MaxKTimeTransformerForQuery2.class);
         extensions.put("debs:emptyTaxi",EmptyTaxiStreamProcessor.class);
 
@@ -116,6 +119,7 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 
 
 
+        final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
 
         //get profit
         //Output stream is of the format : profitStream(profit, startCellNo, pickup_datetime, dropoff_datetime, iij_timestamp)
@@ -185,7 +189,8 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 
 
         ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query6+query7+query8+query9+query10);
-
+        //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4);
+        //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query6+query7+query8);
 
         //Note: If less than 10 cells can be identified within the last 30 min, then NULL is to be output for all others that lack data.
 
@@ -193,7 +198,7 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
         //is produced. Participants must determine the delay using the current system time right after reading the input and right before writing
         //the output. This attribute will be used in the evaluation of the submission.
 
-        executionPlanRuntime.addCallback("profitOutputStream", new StreamCallback() {
+        executionPlanRuntime.addCallback("outputStream", new StreamCallback() {
             long count = 1;
             long totalLatency = 0;
             long latencyFromBegining = 0;
@@ -207,10 +212,10 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
             long gggg= System.currentTimeMillis();
             @Override
             public void receive(Event[] events) {
-                count = count+events.length;
+                //count = count+events.length;
 //                EventPrinter.print(events);
 //                long ss = System.currentTimeMillis() - gggg;
-                System.out.println(count);
+                //System.out.println(count);
 
 //                    for (Event evt : events) {
 //                        currentTime = System.currentTimeMillis();
