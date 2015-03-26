@@ -117,10 +117,6 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
                 "from cell_based_taxi_trips [startCellNo!='null' AND endCellNo!='null'] " +
                 "insert into filtered_cell_based_taxi_trips;";
 
-
-
-        final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
-
         //get profit
         //Output stream is of the format : profitStream(profit, startCellNo, pickup_datetime, dropoff_datetime, iij_timestamp)
         //window of 15 min calculate profit  groupby   startCellNo  -> profit, startCellNo, pickup_datetime, dropoff_datetime, iij_timestamp

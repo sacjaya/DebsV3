@@ -28,7 +28,6 @@ import org.wso2.siddhi.debs2015.extensions.maxK.util.CustomObj;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreQuery2;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
 import org.wso2.siddhi.query.api.definition.Attribute;
-import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreCopy;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -151,7 +150,7 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
                 (objects[2] instanceof String) && (objects[3] instanceof Integer) &&
                 (objects[4] instanceof String) && (objects[5] instanceof Integer) &&
                 (objects[6] instanceof Integer) &&
-                (objects[7] instanceof MaxKStoreCopy) ) {
+                (objects[7] instanceof MaxKStoreQuery2) ) {
             //tripCount, startCellNo, endCellNo, 10, iij_timestamp
             this.value = (String) objects[0]; //value corresponds to trip count
             this.valuePosition = (Integer) objects[1];
