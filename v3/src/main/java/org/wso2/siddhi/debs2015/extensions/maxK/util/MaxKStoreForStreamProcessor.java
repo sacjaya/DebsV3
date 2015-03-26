@@ -20,10 +20,9 @@
 package org.wso2.siddhi.debs2015.extensions.maxK.util;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreForStreamProcessor {
-    private Map<String, Integer> routeFrequencies = new ConcurrentHashMap<String, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
+    private Map<String, Integer> routeFrequencies = new HashMap<String, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
     private Map<Integer, ArrayList<String>> reverseLookup = new TreeMap<Integer, ArrayList<String>>();    //The reverseLookup TreeMap holds the list of cells for each count.
 
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
