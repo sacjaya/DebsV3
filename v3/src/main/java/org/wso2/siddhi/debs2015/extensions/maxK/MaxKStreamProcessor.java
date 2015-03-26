@@ -51,10 +51,6 @@ public class MaxKStreamProcessor extends StreamProcessor {
     //The K value
     private int kValue = 0;
 
-    //An array of Objects to manipulate output stream elements
-    private Object[] previousData = null;
-    private boolean duplicate =true;
-
 
     private MaxKStoreForStreamProcessor maxKStore = null;
 
@@ -78,8 +74,6 @@ public class MaxKStreamProcessor extends StreamProcessor {
             attributeList.add(new Attribute("endCell" + i , Attribute.Type.STRING));
         }
 
-
-        previousData = new Object[2 * kValue];
         maxKStore = new MaxKStoreForStreamProcessor();
 
         return attributeList;
@@ -122,48 +116,36 @@ public class MaxKStreamProcessor extends StreamProcessor {
         LinkedList<String> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
+
         currentTopK = maxKStore.getMaxK(startCellValue+":"+endCellValue, isCurrent, kValue);
 
-        //From here onwards we prepare the output data tuple from this operator.
-        int position = 0;
-
-        //This will be restricted to to k number of lists. Therefore, we do not need to check whether we have exceeded the top k.
-        //We do this until top-k is 10 (kValue==10)
-        for (String cell:currentTopK){
-            //String[] splitValues = cell.split(":");
-            int colonIndex = cell.indexOf(":");
-            //System.out.println("cell|"+cell+"|"+cell.substring(0, colonIndex)+"|"+cell.substring(colonIndex+1));
-
-            data[position++] = cell.substring(0, colonIndex);//start cell ID
-            data[position++] = cell.substring(colonIndex+1);//end cell ID
-
-            if(position>=kValue*2){
-                break;
-            }
-        }
-
-        //Populating remaining elements for the payload of the stream with null if we could not find the top-k number of routes.
-        while (position < (2 * kValue)) {
-            data[position++] = NULL_VALUE;
-            data[position++] = NULL_VALUE;
-        }
-
-        for(int i=0;i<position;i++){
-            //If the previous data we recorded was null or we have different data recorded in this tuple, we set the duplicate flag to false.
-            //Note that by default, the duplicate flag is set to true.
-            //But in most of the cases where previous data item is set to null or its updated, the duplicate flag is set to false indicating that this is not a duplicate output.
-            if(previousData[i] == null || !previousData[i].equals(data[i])) {
-                duplicate = false;
-            }
-            previousData[i] = data[i];
-        }
-
-
-        //And finally we set the duplicate flag.
-        if(duplicate || !isCurrent){
+        if(currentTopK == null || !isCurrent){
             return null;
         }  else {
-            duplicate = true;    //we reset the Duplicate flag here.
+
+            //From here onwards we prepare the output data tuple from this operator.
+            int position = 0;
+
+            //This will be restricted to to k number of lists. Therefore, we do not need to check whether we have exceeded the top k.
+            //We do this until top-k is 10 (kValue==10)
+            for (String cell : currentTopK) {
+                //String[] splitValues = cell.split(":");
+                int colonIndex = cell.indexOf(":");
+                //System.out.println("cell|"+cell+"|"+cell.substring(0, colonIndex)+"|"+cell.substring(colonIndex+1));
+
+                data[position++] = cell.substring(0, colonIndex);//start cell ID
+                data[position++] = cell.substring(colonIndex + 1);//end cell ID
+
+                if (position >= kValue * 2) {
+                    break;
+                }
+            }
+
+            //Populating remaining elements for the payload of the stream with null if we could not find the top-k number of routes.
+            while (position < (2 * kValue)) {
+                data[position++] = NULL_VALUE;
+                data[position++] = NULL_VALUE;
+            }
 
             long timeDifference = System.currentTimeMillis() - (Long) object[4];
             data[position++] = timeDifference;
@@ -174,6 +156,7 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
             return data;
         }
+
     }
 
     @Override

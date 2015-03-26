@@ -23,8 +23,14 @@ import java.util.*;
 
 public class MaxKStoreForStreamProcessor {
     private Map<String, Integer> routeFrequencies = new HashMap<String, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
-    private Map<Integer, ArrayList<String>> reverseLookup = new TreeMap<Integer, ArrayList<String>>();    //The reverseLookup TreeMap holds the list of cells for each count.
-
+    private Map<Integer, ArrayList<String>> reverseLookup = new TreeMap<Integer, ArrayList<String>>(
+            new Comparator<Integer>() {
+                public int compare(Integer o1, Integer o2) {
+                    return o2.compareTo(o1);
+                }
+            }
+    );    //The reverseLookup TreeMap holds the list of cells for each count.
+    private int lastReturnedLeastFrequency = 0;
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
 //
 //        public int compare(Integer o1, Integer o2) {
@@ -80,6 +86,10 @@ public class MaxKStoreForStreamProcessor {
 
         }
 
+        if(previousCount< lastReturnedLeastFrequency && newTripCount< lastReturnedLeastFrequency ){
+            return null;
+        }
+
         //By this point we expect to have a TreeMap which has keys corresponding to the number of
         //trips and values having lists of start:end cells which had that many number of trips.
 
@@ -95,8 +105,11 @@ public class MaxKStoreForStreamProcessor {
         int cntr = 0;
         LinkedList<String> result = new LinkedList<String>();
 
+
         while(itr.hasNext()){
-            ArrayList<String> currentCells = itr.next().getValue();
+            Map.Entry<Integer, ArrayList<String>> item = itr.next();
+            lastReturnedLeastFrequency = item.getKey();
+            ArrayList<String> currentCells = item.getValue();
             int currentCellSize = currentCells.size();
 
             if(currentCells.size() > 0){
