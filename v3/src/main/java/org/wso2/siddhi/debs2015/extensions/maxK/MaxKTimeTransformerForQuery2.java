@@ -22,7 +22,6 @@ import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.exception.ExecutionPlanCreationException;
 import org.wso2.siddhi.core.executor.ConstantExpressionExecutor;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.stream.function.StreamFunctionProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.CustomObj;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreQuery2;
@@ -32,25 +31,12 @@ import org.wso2.siddhi.query.api.definition.Attribute;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
 
     private static final Logger LOGGER = Logger.getLogger(MaxKTimeTransformerForQuery2.class);
     private boolean debugEnabled = false;
-
-    private String value = "";
-    private String profit = "";
-    private String emptyTaxiCount = "";
-    private String cellNo = "";
-    private String iijTimeStamp = "";
-    //The desired attribute position of value in input stream
-    private int valuePosition = 0;
-    private int cellPosition = 0;
-    private int iijTimeStampPosition = 0;
-    private int profitPosition = 0;
-    private int emptyTaxiCountPosition = 0;
 
     //The K value
     private int kValue = 0;
@@ -85,26 +71,7 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
             throw new ExecutionPlanCreationException("Mismatching Parameter count.");
         }
 
-        //Getting all the parameters and assign those to instance variables
-        //profit_per_taxi, profit, emptyTaxiCount, cellNo,10, iij_timestamp
-
-
-        value = ((VariableExpressionExecutor) expressionExecutors[0]).getAttribute().getName();
-        profit = ((VariableExpressionExecutor) expressionExecutors[1]).getAttribute().getName();
-        emptyTaxiCount = ((VariableExpressionExecutor) expressionExecutors[2]).getAttribute().getName();
-        cellNo = ((VariableExpressionExecutor) expressionExecutors[3]).getAttribute().getName();
         kValue = (Integer)((ConstantExpressionExecutor) expressionExecutors[4]).getValue();
-
-        iijTimeStamp = ((VariableExpressionExecutor) expressionExecutors[5]).getAttribute().getName();
-
-//        System.out.println("iijTimeStamp : " + iijTimeStamp);
-//        System.exit(0);
-
-        valuePosition = abstractDefinition.getAttributePosition(value);
-        profitPosition = abstractDefinition.getAttributePosition(profit);
-        emptyTaxiCountPosition = abstractDefinition.getAttributePosition(emptyTaxiCount);
-        cellPosition = abstractDefinition.getAttributePosition(cellNo);
-        iijTimeStampPosition = abstractDefinition.getAttributePosition(iijTimeStamp);
 
         List<Attribute> attributeList = new ArrayList<Attribute>();
 
@@ -141,32 +108,16 @@ public class MaxKTimeTransformerForQuery2 extends StreamFunctionProcessor {
     }
 
     public Object[] currentState() {
-        return new Object[]{value,valuePosition, profit, profitPosition, emptyTaxiCount,emptyTaxiCountPosition, cellNo, cellPosition,kValue, maxKStoreQuery2};
+        return new Object[]{kValue, maxKStoreQuery2};
     }
 
     public void restoreState(Object[] objects) {
-        if ((objects.length == 8) &&
-                (objects[0] instanceof String) && (objects[1] instanceof Integer) &&
-                (objects[2] instanceof String) && (objects[3] instanceof Integer) &&
-                (objects[4] instanceof String) && (objects[5] instanceof Integer) &&
-                (objects[6] instanceof Integer) &&
-                (objects[7] instanceof MaxKStoreQuery2) ) {
-            //tripCount, startCellNo, endCellNo, 10, iij_timestamp
-            this.value = (String) objects[0]; //value corresponds to trip count
-            this.valuePosition = (Integer) objects[1];
+        if ((objects.length == 2) &&
+                (objects[0] instanceof Integer) &&
+                (objects[1] instanceof MaxKStoreQuery2) ) {
 
-            this.profit = (String)objects[2];
-            this.profitPosition = (Integer)objects[3];
-
-            this.emptyTaxiCount = (String) objects[4];
-            this.emptyTaxiCountPosition = (Integer) objects[5];
-
-            this.cellNo = (String) objects[6];
-            this.cellPosition = (Integer) objects[7];
-
-
-            this.kValue = (Integer) objects[8];
-            this.maxKStoreQuery2 = (MaxKStoreQuery2) objects[9];
+            this.kValue = (Integer) objects[0];
+            this.maxKStoreQuery2 = (MaxKStoreQuery2) objects[1];
 
         } else {
             //LOGGER.error("Failed in restoring the Max-K Transformer.");

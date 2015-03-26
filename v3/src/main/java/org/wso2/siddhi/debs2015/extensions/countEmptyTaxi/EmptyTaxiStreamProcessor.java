@@ -9,7 +9,6 @@ import org.wso2.siddhi.core.event.stream.StreamEventCloner;
 import org.wso2.siddhi.core.event.stream.populater.ComplexEventPopulater;
 import org.wso2.siddhi.core.exception.ExecutionPlanCreationException;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
 import org.wso2.siddhi.query.api.definition.AbstractDefinition;
@@ -26,16 +25,8 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
     private static final Logger LOGGER = Logger.getLogger(EmptyTaxiStreamProcessor.class);
     private boolean debugEnabled = false;
 
-    private String endCell = "";
-    private String medallion = "";
-    private String dropoffDatetime = "";
-
-    private int endCellPosition = 0;
-    private int medallionPosition = 0;
-    private int dropoffDatetimePosition = 0;
-
     private Map<String, Object[]> medallionMap = new HashMap<String, Object[]>();
-    private LinkedList<Object[]> taxiInfo = new LinkedList<Object[]>();
+    private LinkedList<Object[]> taxiInfoWindow = new LinkedList<Object[]>();
 
     //The K value
     private int kValue = 0;
@@ -49,14 +40,6 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
             LOGGER.error("Required Parameters : Seven");
             throw new ExecutionPlanCreationException("Mismatching Parameter count.");
         }
-
-        endCell = ((VariableExpressionExecutor) expressionExecutors[0]).getAttribute().getName();
-        medallion = ((VariableExpressionExecutor) expressionExecutors[1]).getAttribute().getName();
-        dropoffDatetime = ((VariableExpressionExecutor) expressionExecutors[2]).getAttribute().getName();
-
-        endCellPosition = abstractDefinition.getAttributePosition(endCell);
-        medallionPosition = abstractDefinition.getAttributePosition(medallion);
-        dropoffDatetimePosition = abstractDefinition.getAttributePosition(dropoffDatetime);
 
         List<Attribute> attributeList = new ArrayList<Attribute>();
 
@@ -101,9 +84,9 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
         long currentTimeStamp = (Long)inputData[2];
 
         while (true){
-            Object[] trip = taxiInfo.peekFirst();
+            Object[] trip = taxiInfoWindow.peekFirst();
             if(trip != null && currentTimeStamp -(Long)trip[2] >= 1800000){
-                taxiInfo.removeFirst();
+                taxiInfoWindow.removeFirst();
                 String medallionKey = (String) trip[1];
                 Object[] medallionMapEntry = medallionMap.get(medallionKey);
 
@@ -118,7 +101,7 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
             }
 
         }
-        taxiInfo.add(inputData);
+        taxiInfoWindow.add(inputData);
 
     }
 

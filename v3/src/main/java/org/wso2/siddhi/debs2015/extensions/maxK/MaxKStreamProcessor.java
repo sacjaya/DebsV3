@@ -29,7 +29,6 @@ import org.wso2.siddhi.core.event.stream.populater.ComplexEventPopulater;
 import org.wso2.siddhi.core.exception.ExecutionPlanCreationException;
 import org.wso2.siddhi.core.executor.ConstantExpressionExecutor;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
-import org.wso2.siddhi.core.executor.VariableExpressionExecutor;
 import org.wso2.siddhi.core.query.processor.Processor;
 import org.wso2.siddhi.core.query.processor.stream.StreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.util.MaxKStoreForStreamProcessor;
@@ -48,21 +47,7 @@ public class MaxKStreamProcessor extends StreamProcessor {
     private static final Logger LOGGER = Logger.getLogger(MaxKStreamProcessor.class);
     private boolean debugEnabled = false;
 
-    //    private String value = "";
-    private String startCell = "";
-    private String endCell = "";
-    private String iijTimeStamp = "";
-//    private String pickupDateTime = "";
-//    private String dropoffDateTime = "";
-
-    //The desired attribute position of value in input stream
-//    private int valuePosition = 0;
-    private int startCellPosition = 0;
-    private int endCellPosition = 0;
-    private int iijTimeStampPosition = 0;
-//    private int pickupDateTimePosition = 0;
-//    private int dropoffDateTimePosition = 0;
-
+    private static final String NULL_VALUE = "null";
     //The K value
     private int kValue = 0;
 
@@ -81,20 +66,9 @@ public class MaxKStreamProcessor extends StreamProcessor {
         }
         // startCellNo, endCellNo, 10, iij_timestamp
 
-        startCell = ((VariableExpressionExecutor) expressionExecutors[0]).getAttribute().getName();
-        endCell = ((VariableExpressionExecutor) expressionExecutors[1]).getAttribute().getName();
+
         kValue = (Integer)((ConstantExpressionExecutor) expressionExecutors[2]).getValue();
 
-        iijTimeStamp = ((VariableExpressionExecutor) expressionExecutors[3]).getAttribute().getName();
-//        pickupDateTime = ((VariableExpressionExecutor) expressionExecutors[5]).getAttribute().getName();
-//        dropoffDateTime = ((VariableExpressionExecutor) expressionExecutors[6]).getAttribute().getName();
-
-//        valuePosition = abstractDefinition.getAttributePosition(value);
-        startCellPosition = abstractDefinition.getAttributePosition(startCell);
-        endCellPosition = abstractDefinition.getAttributePosition(endCell);
-        iijTimeStampPosition = abstractDefinition.getAttributePosition(iijTimeStamp);
-//        pickupDateTimePosition = abstractDefinition.getAttributePosition(pickupDateTime);
-//        dropoffDateTimePosition = abstractDefinition.getAttributePosition(dropoffDateTime);
 
         List<Attribute> attributeList = new ArrayList<Attribute>();
 
@@ -170,8 +144,8 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
         //Populating remaining elements for the payload of the stream with null if we could not find the top-k number of routes.
         while (position < (2 * kValue)) {
-            data[position++] = "null";
-            data[position++] = "null";
+            data[position++] = NULL_VALUE;
+            data[position++] = NULL_VALUE;
         }
 
         for(int i=0;i<position;i++){
@@ -186,19 +160,20 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
 
         //And finally we set the duplicate flag.
-        if(duplicate){
+        if(duplicate || !isCurrent){
             return null;
+        }  else {
+            duplicate = true;    //we reset the Duplicate flag here.
+
+            long timeDifference = System.currentTimeMillis() - (Long) object[4];
+            data[position++] = timeDifference;
+
+            if (debugEnabled) {
+                LOGGER.debug("Latest Top-K elements with frequency" + data);
+            }
+
+            return data;
         }
-        duplicate = true;	//we reset the Duplicate flag here.
-
-        long timeDifference = System.currentTimeMillis() - (Long)object[4];
-        data[position++] = timeDifference;
-
-        if (debugEnabled) {
-            LOGGER.debug("Latest Top-K elements with frequency" + data);
-        }
-
-        return data;
     }
 
     @Override
@@ -213,27 +188,17 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
     @Override
     public Object[] currentState() {
-        return new Object[]{startCell,startCellPosition,endCell,endCellPosition, kValue,maxKStore};
+        return new Object[]{kValue,maxKStore};
     }
 
     @Override
     public void restoreState(Object[] objects) {
-        if ((objects.length == 8) &&
-                (objects[0] instanceof String) && (objects[1] instanceof Integer) &&
-                (objects[2] instanceof String) && (objects[3] instanceof Integer) &&
-                (objects[4] instanceof String) && (objects[5] instanceof Integer) &&
-                (objects[6] instanceof Integer) &&
-                (objects[7] instanceof MaxKStoreForStreamProcessor) ) {
-            //tripCount, startCellNo, endCellNo, 10, iij_timestamp
+        if ((objects.length == 2) &&
+                (objects[0] instanceof Integer) &&
+                (objects[1] instanceof MaxKStoreForStreamProcessor) ) {
 
-            this.startCell = (String) objects[0];
-            this.startCellPosition = (Integer) objects[1];
-
-            this.endCell = (String) objects[2];
-            this.endCellPosition = (Integer) objects[3];
-
-            this.kValue = (Integer) objects[4];
-            this.maxKStore = (MaxKStoreForStreamProcessor) objects[5];
+            this.kValue = (Integer) objects[0];
+            this.maxKStore = (MaxKStoreForStreamProcessor) objects[1];
 
         } else {
             //LOGGER.error("Failed in restoring the Max-K Transformer.");
