@@ -23,8 +23,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MaxKStoreForStreamProcessor {
-    private Map<String, Integer> units = new ConcurrentHashMap<String, Integer>(); //The units Map keeps the trip count for each and every cell. The index is based on the cell ID.
-    private Map<Integer, ArrayList<String>> maxValues  = new TreeMap<Integer, ArrayList<String>>();
+    private Map<String, Integer> routeFrequencies = new ConcurrentHashMap<String, Integer>(); //The units Map keeps the trip count for each and every cell. The index is based on the cell ID.
+    private Map<Integer, ArrayList<String>> reverseLookup  = new TreeMap<Integer, ArrayList<String>>();
     private long count;
 
     /**
@@ -38,7 +38,7 @@ public class MaxKStoreForStreamProcessor {
      */
     public LinkedList<String> getMaxK(String cell, boolean isCurrent, int k) {
         CustomObjQuery1 customObjQ1 = new CustomObjQuery1(cell,count++);
-        Integer tripCount = units.get(cell);
+        Integer tripCount = routeFrequencies.get(cell);
         if(tripCount== null){
             tripCount = 0;
         }
@@ -49,10 +49,10 @@ public class MaxKStoreForStreamProcessor {
         }
 
         if(tripCount==0){
-            Integer previousCount= units.remove(cell);
+            Integer previousCount= routeFrequencies.remove(cell);
 
             if (previousCount!=null) {
-                maxValues.get(previousCount).remove(customObjQ1);
+                reverseLookup.get(previousCount).remove(customObjQ1);
             }
         } else {
             //Here we have a non-zero trip count.
@@ -64,15 +64,14 @@ public class MaxKStoreForStreamProcessor {
             //"units" is a reverse index of which the key is the cell ID and the value is the count.
 
 
-            Integer key = units.get(cell);
+            
 
+//            if ((key!=null)) {
+                Integer previousCount = routeFrequencies.get(cell);
 
-            if ((key!=null)) {
-                Integer previousCount = units.get(cell);
-
-                units.put(cell, tripCount);
-                maxValues.get(previousCount).remove(customObjQ1);
-                ArrayList<String> cellsList = maxValues.get(tripCount);
+                routeFrequencies.put(cell, tripCount);
+                reverseLookup.get(previousCount).remove(customObjQ1);
+                ArrayList<String> cellsList = reverseLookup.get(tripCount);
 
                 if (cellsList != null) {
                     if(cellsList.size()==10)
@@ -81,22 +80,22 @@ public class MaxKStoreForStreamProcessor {
                 } else {
                     cellsList = new ArrayList<String>();
                     cellsList.add(cell);
-                    maxValues.put(tripCount, cellsList);
+                    reverseLookup.put(tripCount, cellsList);
                 }
-            } else {
-                units.put(cell, tripCount);
-                ArrayList<String> cellsList = maxValues.get(tripCount);
-                if (cellsList != null) {
-                    if(cellsList.size()==10)
-                        cellsList.remove(0);
-                    cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
-                    //Since we have a non-null reference here, we need not to put it back to the TreeMap.
-                } else {
-                    cellsList = new ArrayList<String>();
-                    cellsList.add(cell);
-                    maxValues.put(tripCount, cellsList);
-                }
-            }
+//            } else {
+//                routeFrequencies.put(cell, tripCount);
+//                ArrayList<String> cellsList = reverseLookup.get(tripCount);
+//                if (cellsList != null) {
+//                    if(cellsList.size()==10)
+//                        cellsList.remove(0);
+//                    cellsList.add(cell);//Since we use HashSet we need not worry about duplicates here.
+//                    //Since we have a non-null reference here, we need not to put it back to the TreeMap.
+//                } else {
+//                    cellsList = new ArrayList<String>();
+//                    cellsList.add(cell);
+//                    reverseLookup.put(tripCount, cellsList);
+//                }
+//            }
 
         }
 
@@ -109,7 +108,7 @@ public class MaxKStoreForStreamProcessor {
         //18-->[146.164]
         //8-->[144.162,147.168,144.165,146.168]
 
-        Set<Map.Entry<Integer, ArrayList<String>>> entrySet = ((TreeMap)maxValues).entrySet();
+        Set<Map.Entry<Integer, ArrayList<String>>> entrySet = ((TreeMap)reverseLookup).entrySet();
         Iterator<Map.Entry<Integer, ArrayList<String>>> itr = entrySet.iterator();
 
         Map.Entry<Double, ArrayList<String>> currentEntry = null;

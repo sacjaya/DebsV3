@@ -194,7 +194,7 @@ public class Query1withStreamProcessor {
                         */
                 //}
             	
-            	/*
+            	
                 //EventPrinter.print(events);
             	currentTime = System.currentTimeMillis();
                 for (Event evt : events) {
@@ -233,7 +233,7 @@ public class Query1withStreamProcessor {
                         count++;
                 	}
                 }
-                */
+                
             }
         });
 
