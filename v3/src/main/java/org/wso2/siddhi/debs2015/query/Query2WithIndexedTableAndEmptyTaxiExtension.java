@@ -1,7 +1,6 @@
 package org.wso2.siddhi.debs2015.query;
 
 import com.google.common.base.Splitter;
-
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
@@ -12,7 +11,6 @@ import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunctionForQuery2;
 import org.wso2.siddhi.debs2015.extensions.countEmptyTaxi.EmptyTaxiStreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
 import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
-import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.timeStamp.TimeStampFunction;
 import org.wso2.siddhi.debs2015.input.DataLoderThread;
 import org.wso2.siddhi.debs2015.input.EventSenderThread;

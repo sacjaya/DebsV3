@@ -20,18 +20,15 @@
 package org.wso2.siddhi.debs2015.query;
 
 import com.google.common.base.Splitter;
-
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
-import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunction;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKStreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
-import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.timeStamp.TimeStampFunction;
 import org.wso2.siddhi.debs2015.input.DataLoderThread;
 import org.wso2.siddhi.debs2015.input.EventSenderThread;
@@ -67,8 +64,7 @@ public class Query1withStreamProcessor {
     public void run(){
         //Load the configurations
 		final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
-		final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
-		
+
         if(performanceLoggingFlag){
             System.out.println("Performance information collection and logging is enabled.");
         }else{
@@ -113,10 +109,7 @@ public class Query1withStreamProcessor {
         String taxiTripStream = "define stream taxi_trips ( medallion string , hack_license string ,  pickup_datetime_org string, dropoff_datetime_org string , trip_time_in_secs int, " +
                 "trip_distance float, pickup_longitude float,  pickup_latitude float,  dropoff_longitude float,  dropoff_latitude float, fare_amount float, tip_amount float, iij_timestamp float); ";
 
-//        
-//        from sensorInput[sensorId == "ID1"]
-//        		select sensorId, sensorVersion, sensorValue
-//        		insert into filteredSensorStream;
+
         //Output stream is of the format : cell_based_taxi_trips(startCellNo, endCellNo, pickup_datetime, dropoff_datetime, iij_timestamp)
         String query1 = "@info(name = 'query1') " +
                 "from taxi_trips " +
@@ -128,7 +121,6 @@ public class Query1withStreamProcessor {
         String query3 = "@info(name = 'query3') " +
                 "from cell_based_taxi_trips#window.externalTime(dropoff_datetime , 30 min) [startCellNo!='null' AND endCellNo!='null'] " +
                 "select startCellNo , endCellNo,  pickup_datetime_org, dropoff_datetime_org, iij_timestamp " +
-                "group by startCellNo endCellNo " +
                 "insert all events  into countStream ;";
 
 
