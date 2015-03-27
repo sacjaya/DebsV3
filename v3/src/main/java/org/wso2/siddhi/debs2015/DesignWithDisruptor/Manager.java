@@ -45,7 +45,7 @@ public class Manager {
             public void receive(Event[] events) {
 //                EventPrinter.print(events);
                 count = count + events.length;
-                System.out.println("query1 output event count" + count);
+//                System.out.println("query1 output event count" + count);
 
 //                currentTime = System.currentTimeMillis();
 
@@ -74,7 +74,7 @@ public class Manager {
             public void receive(Event[] events) {
 //                EventPrinter.print(events);
                 count = count + events.length;
-                System.out.println("query2 output event count" + count);
+//                System.out.println("query2 output event count" + count);
 
                 currentTime = System.currentTimeMillis();
 
@@ -147,6 +147,7 @@ public class Manager {
         BufferedReader br;
         int count = 0;
 
+        long startTime=System.currentTimeMillis();
         try {
             br = new BufferedReader(new FileReader(fileName), 10 * 1024 * 1024);
             String line = br.readLine();
@@ -236,7 +237,9 @@ public class Manager {
                 line = br.readLine();
                 count++;
             }
+
             System.out.println("Total amount of events read : " + count);
+            System.out.println("Total time taken for read : " + (System.currentTimeMillis()-startTime));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Throwable e) {
