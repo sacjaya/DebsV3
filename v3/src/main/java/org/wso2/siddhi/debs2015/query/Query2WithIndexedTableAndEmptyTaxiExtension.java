@@ -9,7 +9,7 @@ import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunctionForQuery2;
 import org.wso2.siddhi.debs2015.extensions.countEmptyTaxi.EmptyTaxiStreamProcessor;
-import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
+import org.wso2.siddhi.debs2015.extensions.maxK.MaxKStreamProcessorQuery2;
 import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
 import org.wso2.siddhi.debs2015.extensions.timeStamp.TimeStampFunction;
 import org.wso2.siddhi.debs2015.input.DataLoderThread;
@@ -65,7 +65,7 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
         extensions.put("debs:getTimestamp", TimeStampFunction.class);
         //extensions.put("debs:median",MedianAggregator.class);
         extensions.put("debs:median",BucketingBasedMedianAggregator.class);
-        extensions.put("MaxK:getMaxK", MaxKTimeTransformerForQuery2.class);
+        extensions.put("MaxK:getMaxK", MaxKStreamProcessorQuery2.class);
         extensions.put("debs:emptyTaxi",EmptyTaxiStreamProcessor.class);
 
         siddhiContext.setSiddhiExtensions(extensions);
@@ -162,11 +162,6 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 
         String query9 = "@info(name = 'query9') " +
                 "from finalProfitStream#MaxK:getMaxK(profit_per_taxi, profit, emptyTaxiCount, cellNo,10, iij_timestamp) " +
-                "select * " +
-                "insert into profitOutputStream ;";
-
-        String query10 = "@info(name = 'query10') " +
-                "from profitOutputStream[duplicate == false] " +
                 "select pickup_datetime, dropoff_datetime, " +
                 "profitable_cell_id_1, empty_taxies_in_cell_id_1, median_profit_in_cell_id_1, profitability_of_cell_1," +
                 "profitable_cell_id_2, empty_taxies_in_cell_id_2, median_profit_in_cell_id_2, profitability_of_cell_2," +
@@ -182,7 +177,7 @@ public class Query2WithIndexedTableAndEmptyTaxiExtension {
 
 
 
-        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query6+query7+query8+query9+query10);
+        ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query6+query7+query8+query9);
         //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4);
         //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+emptyTaxiTable+query1+query2+query3+query4+query6+query7+query8);
 

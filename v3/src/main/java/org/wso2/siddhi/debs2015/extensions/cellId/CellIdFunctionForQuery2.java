@@ -46,7 +46,7 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
         //+Miyuru: Why don't we simply return null if the cell is out of the permitted range?
         //that way we can avoid creating additional String literals "-".
         if(cellIdFirstComponent<0 ||cellIdFirstComponent>gridResolution){
-            return "-";
+            return null;
         }
 
 
@@ -63,7 +63,7 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
         }
 
         if(cellIdSecondComponent<0 ||cellIdSecondComponent>gridResolution){
-            return "-";
+            return null;
         }
 
         return cellIdFirstComponent+"."+cellIdSecondComponent;
