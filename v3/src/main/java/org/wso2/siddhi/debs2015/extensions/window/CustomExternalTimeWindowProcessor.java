@@ -48,7 +48,6 @@ public class CustomExternalTimeWindowProcessor extends WindowProcessor implement
 
             StreamEvent clonedEvent = null;
             if (streamEvent.getType() == StreamEvent.Type.EXPIRED) {
-                streamEventChunk.remove();
                 clonedEvent = streamEventCloner.copyStreamEvent(streamEvent);
                 clonedEvent.setType(StreamEvent.Type.EXPIRED);
                 clonedEvent.setTimestamp(currentTime + timeToKeep);
@@ -68,6 +67,7 @@ public class CustomExternalTimeWindowProcessor extends WindowProcessor implement
 
             if (streamEvent.getType() == StreamEvent.Type.EXPIRED) {
                 this.expiredEventChunk.add(clonedEvent);
+                streamEventChunk.remove();
             }
             expiredEventChunk.reset();
         }

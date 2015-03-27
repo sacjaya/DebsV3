@@ -84,14 +84,7 @@ public class CellIdFunction extends FunctionExecutor {
             cellIdFirstComponent = (short) ((((eastMostLongitude - inputLongitude) / longitudeDifference) * gridResolution) + 1);
         }
         
-        //+Miyuru: Why don't we simply return null if the cell is out of the permitted range?
-        //that way we can avoid creating additional String literals "-".
-        if(cellIdFirstComponent<0 ||cellIdFirstComponent>gridResolution){
-            //return "-";
-        	return null;
-        }
 
-        
         //--------------------------------------------------          The following is for latitude -------------------------------------
         //float inputLatitude = Float.parseFloat(String.valueOf(((Object[])data)[1]));
         float inputLatitude = (Float)(((Object[])data)[1]);
@@ -104,12 +97,7 @@ public class CellIdFunction extends FunctionExecutor {
         } else {
             cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
         }
-        
-        if(cellIdSecondComponent<0 ||cellIdSecondComponent>gridResolution){
-            //return "-";
-        	return null;
-        }
-        
+
         return cellIdFirstComponent+"."+cellIdSecondComponent;
     }
 }

@@ -3,20 +3,20 @@
  */
 package org.wso2.siddhi.debs2015.input;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.debs2015.util.Config;
 import org.wso2.siddhi.debs2015.util.Constants;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author Miyuru Dayarathna
  *
  */
 public class EventSenderThread extends Thread {
-	private LinkedBlockingQueue<Object> eventBufferList;
+	private LinkedBlockingQueue<Object[]> eventBufferList;
 	private InputHandler inputHandler;
 	private LinkedBlockingQueue<String> aggregateInputList;
 	private Date startDateTime;
@@ -24,8 +24,9 @@ public class EventSenderThread extends Thread {
 	private boolean firstTimeRead = true;
 	private boolean readCompleted = false;
 	
-	public EventSenderThread(LinkedBlockingQueue<Object> eventBuffer, LinkedBlockingQueue<String> aggregateInputList, InputHandler inputHandler){
-		this.eventBufferList = eventBuffer;
+	public EventSenderThread(LinkedBlockingQueue<Object[]> eventBuffer, LinkedBlockingQueue<String> aggregateInputList, InputHandler inputHandler){
+        super("Event Sender");
+        this.eventBufferList = eventBuffer;
 		this.inputHandler = inputHandler;
 		this.aggregateInputList = aggregateInputList;
 	}

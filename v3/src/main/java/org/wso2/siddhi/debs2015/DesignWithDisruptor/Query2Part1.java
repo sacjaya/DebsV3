@@ -55,7 +55,7 @@ public class Query2Part1 {
         // This is an additional field used to indicate the time when the event has been injected to the query network.
 
         String taxiTripStream = "define stream taxi_trips ( medallion string , hack_license string ,  pickup_datetime_org string, dropoff_datetime_org string , trip_time_in_secs int, " +
-                "trip_distance float, pickup_longitude float,  pickup_latitude float,  dropoff_longitude float,  dropoff_latitude float, fare_amount float, tip_amount float, iij_timestamp long); ";
+                "trip_distance float, pickup_longitude float,  pickup_latitude float,  dropoff_longitude float,  dropoff_latitude float, fare_plus_ip_amount float, iij_timestamp long); ";
 
         //The profit that originates from an area is computed by calculating the median fare + tip for trips that started in the area and ended within the last 15 minutes
 
@@ -64,28 +64,22 @@ public class Query2Part1 {
         String query1 = " @info(name = 'query1') " +
                 "from taxi_trips " +
                 "select debs:cellId(pickup_longitude,pickup_latitude) as startCellNo, debs:cellId(dropoff_longitude,dropoff_latitude) as endCellNo , " +
-                "debs:getTimestamp(pickup_datetime_org) as pickup_datetime , debs:getTimestamp(dropoff_datetime_org) as dropoff_datetime, fare_amount, " +
-                "tip_amount, medallion, pickup_datetime_org, dropoff_datetime_org,  iij_timestamp " +
+                "debs:getTimestamp(pickup_datetime_org) as pickup_datetime , debs:getTimestamp(dropoff_datetime_org) as dropoff_datetime, fare_plus_ip_amount," +
+                " medallion, pickup_datetime_org, dropoff_datetime_org,  iij_timestamp " +
                 " insert into cell_based_taxi_trips ;";
-
-
-        String query2 = "@info(name = 'query2') " +
-                "from cell_based_taxi_trips [startCellNo!='null' AND endCellNo!='null'] " +
-                "insert into filtered_cell_based_taxi_trips;";
-
 
         //get profit
         //Output stream is of the format : profitStream(profit, startCellNo, pickup_datetime, dropoff_datetime, iij_timestamp)
         //window of 15 min calculate profit  groupby   startCellNo  -> profit, startCellNo, pickup_datetime, dropoff_datetime, iij_timestamp
-        String query3 = "@info(name = 'query3') " +
-                "from filtered_cell_based_taxi_trips#window.externalTime(dropoff_datetime , 15 min)  " +
-                "select debs:median(fare_amount+tip_amount) as profit, startCellNo, endCellNo, pickup_datetime, dropoff_datetime, " +
+        String query2 = "@info(name = 'query2') " +
+                "from cell_based_taxi_trips#window.externalTime(dropoff_datetime , 15 min)  " +
+                "select debs:median(fare_plus_ip_amount) as profit, startCellNo, endCellNo, pickup_datetime, dropoff_datetime, " +
                 "medallion, pickup_datetime_org, dropoff_datetime_org,  iij_timestamp  " +
                 "group by startCellNo " +
                 "insert all events  into profitStream ;";
 
 
-        return siddhiManager.createExecutionPlanRuntime(taxiTripStream + query1 + query2 + query3);
+        return siddhiManager.createExecutionPlanRuntime("@Plan:name('Query2-median')"+taxiTripStream + query1 + query2 );
 
 
     }

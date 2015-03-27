@@ -3,13 +3,13 @@
  */
 package org.wso2.siddhi.debs2015.input;
 
+import com.google.common.base.Splitter;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
-
-import com.google.common.base.Splitter;
 
 /**
  * @author Miyuru Dayarathna
@@ -18,12 +18,13 @@ import com.google.common.base.Splitter;
 public class DataLoderThread extends Thread {
 	private String fileName;
 	private static Splitter splitter = Splitter.on(',');
-	private LinkedBlockingQueue<Object> eventBufferList;
+	private LinkedBlockingQueue<Object[]> eventBufferList;
 	private BufferedReader br;
 	private int count;
 	
-	public DataLoderThread(String fileName, LinkedBlockingQueue<Object> eventBuffer){
-		this.fileName = fileName;
+	public DataLoderThread(String fileName, LinkedBlockingQueue<Object[]> eventBuffer){
+        super("Data Loader");
+        this.fileName = fileName;
 		this.eventBufferList = eventBuffer;
 	}
 	
@@ -44,16 +45,13 @@ public class DataLoderThread extends Thread {
                         String pickup_latitude = dataStrIterator.next();
                         String dropoff_longitude = dataStrIterator.next();
                         String dropoff_latitude = dataStrIterator.next();
-                        //String payment_type = dataStrIterator.next();
                         dataStrIterator.next();
                         String fare_amount = dataStrIterator.next();
-                        //String surcharge = dataStrIterator.next();
-                        //String mta_tax = dataStrIterator.next();
                         dataStrIterator.next();
                         dataStrIterator.next();
                         String tip_amount = dataStrIterator.next();
-                        //String tolls_amount = dataStrIterator.next();
-                        //String total_amount = dataStrIterator.next();
+
+
                     	
                         Object[] eventData = null;
                         
@@ -68,10 +66,9 @@ public class DataLoderThread extends Thread {
                                                           Float.parseFloat(pickup_latitude), 
                                                           Float.parseFloat(dropoff_longitude), 
                                                           Float.parseFloat(dropoff_latitude),
-                                                          //Boolean.parseBoolean(payment_type),
-                                                          Float.parseFloat(fare_amount), //These currency values can be coded to two bytes 
-                                                          //Float.parseFloat(surcharge), 
-                                                          //Float.parseFloat(mta_tax), 
+                                                          Float.parseFloat(fare_amount), //These currency values can be coded to two bytes
+                                                          //Float.parseFloat(surcharge),
+                                                          //Float.parseFloat(mta_tax),
                                                           Float.parseFloat(tip_amount),
                                                           //Float.parseFloat(tolls_amount),
                                                           //Float.parseFloat(total_amount),
