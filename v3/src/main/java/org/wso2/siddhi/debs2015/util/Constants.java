@@ -16,6 +16,7 @@ public class Constants {
 	public static int EVENT_BUFFER_SIZE = 360000;
 	public static int EVENT_LIST_SIZE_POLLING_WINDOW=100000;
 	public static final int MONITORING_THREAD_SLEEP_TIME = 1000;
+    public static final int DISRUPTOR_BUFFER_SIZE = 2048;
 	public static final int INPUT_INJECTION_TIMESTAMP_FIELD = 12;//17;
 	public static final int MAIN_THREAD_SLEEP_TIME = 3600000;//This is 1 hour
 }

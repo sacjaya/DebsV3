@@ -21,16 +21,16 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
 
 import java.util.*;
 
-public class MaxKStoreForStreamProcessor {
-    private Map<String, Integer> routeFrequencies = new HashMap<String, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
-    private Map<Integer, ArrayList<String>> reverseLookup = new TreeMap<Integer, ArrayList<String>>(
-            new Comparator<Integer>() {
-                public int compare(Integer o1, Integer o2) {
+public class MaxKStoreForStreamProcessorQuery2 {
+    private Map<String, Double> routeFrequencies = new HashMap<String, Double>(); //a reverse index of which the key is the cell ID and the value is the profitability.
+    private Map<Double, ArrayList<CustomObj>> reverseLookup = new TreeMap<Double, ArrayList<CustomObj>>(
+            new Comparator<Double>() {
+                public int compare(Double o1, Double o2) {
                     return o2.compareTo(o1);
                 }
             }
     );    //The reverseLookup TreeMap holds the list of cells for each count.
-    private int lastReturnedLeastFrequency = 0;
+    private double lastReturnedLeastProfitability = 0;
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
 //
 //        public int compare(Integer o1, Integer o2) {
@@ -48,68 +48,53 @@ public class MaxKStoreForStreamProcessor {
      * @params value - The pressure reading value for the current event
      * @params date - The timestamp the pressure reading was produced.
      */
-    public LinkedList<String> getMaxK(String cell, boolean isCurrent, int k) {
-        Integer previousCount = routeFrequencies.get(cell);
+    public LinkedList<CustomObj> getMaxK(CustomObj customObj, int k) {
+        String cell = customObj.getCellID();
+        Double currentProfit = (Double) customObj.getProfit_per_taxi();
 
-        if (previousCount == null) {
-            previousCount = 0;
-        } else {
-            reverseLookup.get(previousCount).remove(cell);
-        }
-        int newTripCount = previousCount;
+        Double previousProfit = routeFrequencies.get(customObj.getCellID());
 
-        if (isCurrent) {
-            newTripCount++;
+        if (previousProfit == null) {
+            previousProfit = 0d;
         } else {
-            newTripCount--;
+            reverseLookup.get(previousProfit).remove(cell);
         }
 
-        if (newTripCount == 0) {
+
+        if (currentProfit == 0) {
             routeFrequencies.remove(cell);
         } else {
             //This code basically updates the count per cell. If there is a new value for the count which is non-zero, the old value is replaced with the new value.
 
-            routeFrequencies.put(cell, newTripCount);
+            routeFrequencies.put(cell, currentProfit);
 
-            ArrayList<String> cellsList = reverseLookup.get(newTripCount);
+            ArrayList<CustomObj> cellsList = reverseLookup.get(currentProfit);
 
             if (cellsList != null) {
                 if (cellsList.size() == 10)
                     cellsList.remove(0);
-                cellsList.add(cell);
+                cellsList.add(customObj);
             } else {
-                cellsList = new ArrayList<String>();
-                cellsList.add(cell);
-                reverseLookup.put(newTripCount, cellsList);
+                cellsList = new ArrayList<CustomObj>();
+                cellsList.add(customObj);
+                reverseLookup.put(currentProfit, cellsList);
             }
 
 
         }
 
-        if((previousCount< lastReturnedLeastFrequency && newTripCount< lastReturnedLeastFrequency) || !isCurrent ){
-            return null;
-        }
 
-        //By this point we expect to have a TreeMap which has keys corresponding to the number of
-        //trips and values having lists of start:end cells which had that many number of trips.
-
-        //E.g.,
-
-        //26-->[140.158,145.165,144.164]
-        //18-->[146.164]
-        //8-->[144.162,147.168,144.165,146.168]
-
-        Set<Map.Entry<Integer, ArrayList<String>>> entrySet = ((TreeMap)reverseLookup).entrySet();
-        Iterator<Map.Entry<Integer, ArrayList<String>>> itr = entrySet.iterator();
+        Set<Map.Entry<Double, ArrayList<CustomObj>>> entrySet = ((TreeMap)reverseLookup).entrySet();
+        Iterator<Map.Entry<Double, ArrayList<CustomObj>>> itr = entrySet.iterator();
 
         int cntr = 0;
-        LinkedList<String> result = new LinkedList<String>();
+        LinkedList<CustomObj> result = new LinkedList<CustomObj>();
 
 
         while(itr.hasNext()){
-            Map.Entry<Integer, ArrayList<String>> item = itr.next();
-            lastReturnedLeastFrequency = item.getKey();
-            ArrayList<String> currentCells = item.getValue();
+            Map.Entry<Double, ArrayList<CustomObj>> item = itr.next();
+            lastReturnedLeastProfitability = item.getKey();
+            ArrayList<CustomObj> currentCells = item.getValue();
             int currentCellSize = currentCells.size();
 
             if(currentCells.size() > 0){
