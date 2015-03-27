@@ -48,7 +48,7 @@ public class MaxKStoreForStreamProcessorQuery2 {
      * @params value - The pressure reading value for the current event
      * @params date - The timestamp the pressure reading was produced.
      */
-    public LinkedList<CustomObj> getMaxK(CustomObj customObj, int k) {
+    public LinkedList<CustomObj> getMaxK(CustomObj customObj, boolean isCurrent, int k) {
         String cell = customObj.getCellID();
         Double currentProfit = (Double) customObj.getProfit_per_taxi();
 
@@ -81,6 +81,10 @@ public class MaxKStoreForStreamProcessorQuery2 {
             }
 
 
+        }
+
+        if((previousProfit< lastReturnedLeastProfitability && currentProfit< lastReturnedLeastProfitability) || !isCurrent ){
+            return null;
         }
 
 
