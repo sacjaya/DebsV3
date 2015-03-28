@@ -68,8 +68,8 @@ public class Query1Part1 {
                 "startCell7 ,endCell7 , startCell8, endCell8, startCell9, endCell9, startCell10, endCell10, iij_timestamp " +
                 "insert into q1outputStream";
 
-        //ExecutionPlanRuntime executionPlanRuntime = siddhiManager.createExecutionPlanRuntime(taxiTripStream+query1+query3+query4+query5);
-        return siddhiManager.createExecutionPlanRuntime(inputStream + query1 + query2);
+
+        return siddhiManager.createExecutionPlanRuntime("@Plan:name('Query1')" + inputStream + query1 + query2);
 
     }
 

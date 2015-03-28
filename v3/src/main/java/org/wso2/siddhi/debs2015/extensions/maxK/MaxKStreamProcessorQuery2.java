@@ -81,10 +81,12 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
             ComplexEvent complexEvent = streamEventChunk.next();
 
             Object[] inputData = new Object[attributeExpressionLength+1];
-            for (int i = 0; i < attributeExpressionLength; i++) {
-                inputData[i] = attributeExpressionExecutors[i].execute(complexEvent);
+            inputData[0] = complexEvent.getType() == ComplexEvent.Type.CURRENT;
+            for (int i = 1; i < attributeExpressionLength+1; i++) {
+                inputData[i] = attributeExpressionExecutors[i - 1].execute(complexEvent);
             }
-            Object[] data = processEventForMaxK(inputData);
+
+                Object[] data = processEventForMaxK(inputData);
 
             if(data == null){
                 streamEventChunk.remove();
@@ -99,10 +101,11 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
     private Object[] processEventForMaxK(Object[] object) {
         Object[] data =  new Object[4 * kValue+1];
 
-        Double eventKeyValue = (Double) object[0];//This is the profit_per_taxi
-        Object profitValue = object[1];
-        Object emptyTaxiCountValue = object[2];
-        String cellValue = (String) object[3];
+        boolean isCurrent = (Boolean)object[0];
+        Double eventKeyValue = (Double) object[1];//This is the profit_per_taxi
+        Object profitValue = object[2];
+        Object emptyTaxiCountValue = object[3];
+        String cellValue = (String) object[4];
 
         //Map<Double, List<CustomObj>> currentTopK;
         LinkedList<CustomObj> currentTopK;
@@ -111,7 +114,7 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
 
-        currentTopK = maxKStore.getMaxK(new CustomObj(cellValue,eventKeyValue,profitValue,emptyTaxiCountValue), kValue);
+        currentTopK = maxKStore.getMaxK(new CustomObj(cellValue,eventKeyValue,profitValue,emptyTaxiCountValue), isCurrent,kValue);
 
 
         if(currentTopK == null ){
@@ -143,7 +146,7 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
                 data[position++] = "null";
             }
 
-            long timeDifference = System.currentTimeMillis() - (Long) object[5];
+            long timeDifference = System.currentTimeMillis() - (Long) object[6];
             data[position++] = timeDifference;
 
             if (debugEnabled) {

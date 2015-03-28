@@ -1,8 +1,5 @@
 package org.wso2.siddhi.debs2015.extensions.median;
 
-import com.google.common.collect.MinMaxPriorityQueue;
-
-import org.apache.log4j.Logger;
 import org.wso2.siddhi.core.config.ExecutionPlanContext;
 import org.wso2.siddhi.core.executor.ExpressionExecutor;
 import org.wso2.siddhi.core.query.selector.attribute.aggergator.AttributeAggregator;
@@ -18,6 +15,7 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
     int[] mediationArray = new int[size];
     int totalElements = 0;
 
+    float lastReturnedMedian = 0;
 
     public float getMedian() {
 
@@ -46,7 +44,7 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
                 }
                 loopCount++;
             }
-            return (firstMedianValue + secondMedianValue) / 2f;
+            lastReturnedMedian =  (firstMedianValue + secondMedianValue) / 2f;
 
 
         } else {
@@ -62,8 +60,10 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
                 }
                 loopCount++;
             }
-            return medianValue/multiplexer;
+            lastReturnedMedian =  medianValue/multiplexer;
         }
+
+        return lastReturnedMedian;
     }
 
 	public void start() {
@@ -93,16 +93,21 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
 	@Override
     public Object processAdd(Object data) {
 		Float  element = (Float) data;
-		 
-        int roundValue = Math.round(element*multiplexer);
-        if (roundValue < size - 1) {
-            mediationArray[roundValue] += 1;
-        } else {
-            mediationArray[size - 1] += 1;
-        }
-        totalElements++;
-		 
-	    return getMedian();
+
+		 if(element<0){
+              return lastReturnedMedian;
+         } else {
+
+             int roundValue = Math.round(element * multiplexer);
+             if (roundValue < size - 1) {
+                 mediationArray[roundValue] += 1;
+             } else {
+                 mediationArray[size - 1] += 1;
+             }
+             totalElements++;
+
+             return getMedian();
+         }
     }
 	
 //    public void addElement(float element) {
@@ -119,31 +124,39 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
 	@Override
     public Object processAdd(Object[] data) {
 		Float  element = (Float) data[0];
-		
-        int roundValue = Math.round(element*multiplexer);
-        if (roundValue < size - 1) {
-            mediationArray[roundValue] += 1;
+
+        if(element<0){
+            return lastReturnedMedian;
         } else {
-            mediationArray[size - 1] += 1;
+            int roundValue = Math.round(element * multiplexer);
+            if (roundValue < size - 1) {
+                mediationArray[roundValue] += 1;
+            } else {
+                mediationArray[size - 1] += 1;
+            }
+            totalElements++;
+
+            return getMedian();
         }
-        totalElements++;
-		 
-	    return getMedian();
     }
 
 	@Override
     public Object processRemove(Object data) {
 		Float  element = (Float) data;
-		
-        int roundValue = Math.round(element*multiplexer);
-        if (roundValue < size - 1) {
-            mediationArray[roundValue] -= 1;
+
+        if(element<0){
+            return lastReturnedMedian;
         } else {
-            mediationArray[size - 1] -= 1;
+            int roundValue = Math.round(element * multiplexer);
+            if (roundValue < size - 1) {
+                mediationArray[roundValue] -= 1;
+            } else {
+                mediationArray[size - 1] -= 1;
+            }
+            totalElements--;
+
+            return getMedian();
         }
-        totalElements--;
-        
-        return getMedian();
     }
 	
 //    public void removeElement(float element) {
@@ -159,16 +172,20 @@ public class BucketingBasedMedianAggregator extends AttributeAggregator {
 	@Override
     public Object processRemove(Object[] data) {
 		Float  element = (Float) data[0];
-		
-        int roundValue = Math.round(element*multiplexer);
-        if (roundValue < size - 1) {
-            mediationArray[roundValue] -= 1;
+
+        if(element<0){
+            return lastReturnedMedian;
         } else {
-            mediationArray[size - 1] -= 1;
+            int roundValue = Math.round(element * multiplexer);
+            if (roundValue < size - 1) {
+                mediationArray[roundValue] -= 1;
+            } else {
+                mediationArray[size - 1] -= 1;
+            }
+            totalElements--;
+
+            return getMedian();
         }
-        totalElements--;
-        
-        return getMedian();
     }
 
 	@Override

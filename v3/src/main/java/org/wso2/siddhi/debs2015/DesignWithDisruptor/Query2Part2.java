@@ -82,7 +82,7 @@ public class Query2Part2 {
                 "insert into q2outputStream;";
 
 
-        return siddhiManager.createExecutionPlanRuntime(taxiTripStream + emptyTaxiTable + query1 + query2 + query3 + query4 + query5);
+        return siddhiManager.createExecutionPlanRuntime("@Plan:name('Query2-Join')"+taxiTripStream + emptyTaxiTable + query1 + query2 + query3 + query4 + query5);
 
 
     }

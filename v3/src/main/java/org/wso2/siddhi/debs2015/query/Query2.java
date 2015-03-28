@@ -7,7 +7,6 @@ import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
-import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunctionForQuery2;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
 import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
@@ -33,7 +32,7 @@ public class Query2 {
     private static Splitter splitter = Splitter.on(',');
     private static LinkedBlockingQueue<String> aggregateInputList = new LinkedBlockingQueue<String>();
     private static LinkedBlockingQueue<String> aggregateOutputList = new LinkedBlockingQueue<String>();
-    private static LinkedBlockingQueue<Object> eventBufferList = null;
+    private static LinkedBlockingQueue<Object[]> eventBufferList = null;
     private boolean incrementalLoadingFlag = false;
     private static final int INPUT_INJECTION_TIMESTAMP_FIELD = 17;
 
@@ -411,7 +410,7 @@ public class Query2 {
         //loadEventsFromFile(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"));
         if(incrementalLoadingFlag){
             System.out.println("Incremental data loading is performed.");
-            eventBufferList = new LinkedBlockingQueue<Object>(Constants.EVENT_BUFFER_SIZE);
+            eventBufferList = new LinkedBlockingQueue<Object[]>(Constants.EVENT_BUFFER_SIZE);
             DataLoderThread dataLoaderThread = new DataLoderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
             EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
@@ -422,7 +421,7 @@ public class Query2 {
             senderThread.start();
         }else{
             System.out.println("Data set will be loaded to the memory completely.");
-            eventBufferList = new LinkedBlockingQueue<Object>();
+            eventBufferList = new LinkedBlockingQueue<Object[]>();
             //BatchDataLoaderThread dataLoaderThread = new BatchDataLoaderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
             EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
