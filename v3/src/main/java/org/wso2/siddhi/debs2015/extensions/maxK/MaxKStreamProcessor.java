@@ -135,7 +135,6 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
                 data[position++] = cell.substring(0, colonIndex);//start cell ID
                 data[position++] = cell.substring(colonIndex + 1);//end cell ID
-
             }
 
             //Populating remaining elements for the payload of the stream with null if we could not find the top-k number of routes.

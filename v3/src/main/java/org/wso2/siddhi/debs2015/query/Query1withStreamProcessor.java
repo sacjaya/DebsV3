@@ -64,7 +64,8 @@ public class Query1withStreamProcessor {
     public void run(){
         //Load the configurations
 		final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
-
+		final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
+		
         if(performanceLoggingFlag){
             System.out.println("Performance information collection and logging is enabled.");
         }else{
@@ -255,7 +256,7 @@ public class Query1withStreamProcessor {
             eventBufferList = new LinkedBlockingQueue<Object[]>(Constants.EVENT_BUFFER_SIZE);
             DataLoderThread dataLoaderThread = new DataLoderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
-            EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
+            EventSenderThread senderThread = new EventSenderThread(eventBufferList, inputHandler);
 
             //start the data loading process
             dataLoaderThread.start();
@@ -266,7 +267,7 @@ public class Query1withStreamProcessor {
             eventBufferList = new LinkedBlockingQueue<Object[]>();
             //BatchDataLoaderThread dataLoaderThread = new BatchDataLoaderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
-            EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
+            EventSenderThread senderThread = new EventSenderThread(eventBufferList, inputHandler);
             DataLoderThread dataLoaderThread = new DataLoderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
 
             //start the data loading process
