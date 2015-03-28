@@ -57,7 +57,7 @@ public class MaxKStoreForStreamProcessorQuery2 {
         if (previousProfit == null) {
             previousProfit = 0d;
         } else {
-            reverseLookup.get(previousProfit).remove(cell);
+            reverseLookup.get(previousProfit).remove(customObj);
         }
 
 
@@ -88,7 +88,7 @@ public class MaxKStoreForStreamProcessorQuery2 {
         }
 
 
-        Set<Map.Entry<Double, ArrayList<CustomObj>>> entrySet = ((TreeMap)reverseLookup).entrySet();
+        Set<Map.Entry<Double, ArrayList<CustomObj>>> entrySet = reverseLookup.entrySet();
         Iterator<Map.Entry<Double, ArrayList<CustomObj>>> itr = entrySet.iterator();
 
         int cntr = 0;

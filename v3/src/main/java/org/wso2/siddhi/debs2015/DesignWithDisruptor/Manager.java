@@ -1,193 +1,183 @@
 package org.wso2.siddhi.debs2015.DesignWithDisruptor;
 
 import com.google.common.base.Splitter;
-
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
-import org.wso2.siddhi.debs2015.performance.PerformanceMonitoringThreadOutput;
+import org.wso2.siddhi.debs2015.performance.PerfStats;
 import org.wso2.siddhi.debs2015.util.Config;
 import org.wso2.siddhi.debs2015.util.Constants;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.*;
 import java.util.Iterator;
-import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Manager {
 
     private InputHandler inputHandlerForQ1;
     private InputHandler getInputHandlerForQ2;
-    private static LinkedBlockingQueue<String> aggregateOutputListQuery1 = new LinkedBlockingQueue<String>();
-    private static LinkedBlockingQueue<String> aggregateOutputListQuery2 = new LinkedBlockingQueue<String>();
-
+    volatile long events = 0;
+    volatile long dataSetSize;
+    private long startTime;
+    private static PerfStats perfStats1 = new PerfStats();
+    private static PerfStats perfStats2 = new PerfStats();
+    private static long lastEventTime1 = 0;
+    private static long lastEventTime2 = 0;
 
     public static void main(String[] args) {
         Manager manager = new Manager();
         manager.run();
+        System.exit(0);
     }
 
     private void run() {
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
-        
+        dataSetSize = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
+        final String logDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
+
+
         Query2Part1 query2Part1 = new Query2Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ2p1 = query2Part1.addExecutionPlan();
         InputHandler taxiTripsInputHandler = executionPlanRuntimeQ2p1.getInputHandler("taxi_trips");
-
 
         Query1Part1 query1Part1 = new Query1Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ1p1 = query1Part1.addExecutionPlan();
         inputHandlerForQ1 = executionPlanRuntimeQ1p1.getInputHandler("profitStream");
 
-        executionPlanRuntimeQ1p1.addCallback("q1outputStream", new StreamCallback() {
-            long count = 1;
-            long currentTime = 0;
-            long latency = 0;
-            long totalLatency = 0;
-            long latencyFromBegining = 0;
-            long latencyWithinEventCountWindow = 0;
-            long startTime = System.currentTimeMillis();
-            long timeDifferenceFromStart = 0;
-            long timeDifference = 0; //This is the time difference for this time window.
-            long prevTime = 0;
-
-            @Override
-            public void receive(Event[] events) {
-//                EventPrinter.print(events);
-//                count = count + events.length;
-//                System.out.println("query1 output event count" + count);
-
-//                currentTime = System.currentTimeMillis();
-
-                /*for (Event evt : events) {
-                    Object[] data = evt.getData();
-                    long eventOriginationTime = (Long) data[22];
-                    latency = eventOriginationTime == -1l ? -1l : (currentTime - eventOriginationTime);
-                    System.out.println(latency);
-                }  */
-            	
-            	
-            	currentTime = System.currentTimeMillis();
-                for (Event evt : events) {
-                	//If the printoutput flag is set, we need to print the output.
-                	
-                	
-                	Object[] data = evt.getData();
-                    long eventOriginationTime = (Long) data[22];
-                    //latency = eventOriginationTime==-1l ? -1l:(currentTime - eventOriginationTime);
-                    latency = currentTime - eventOriginationTime;
-                    
-                    if(printOutputFlag){
-                        for(int i=0;i < 22; i++){
-                        	System.out.print(data[i] + ",");
-                        }
-                        
-                        System.out.println(latency);
-                	}
-                	
-                	//If the performance logging flag is set, we need to print the performance measurements.
-                	if(performanceLoggingFlag){
-                        latencyWithinEventCountWindow += latency;
-                        latencyFromBegining += latency;
-    
-                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
-                            timeDifferenceFromStart = currentTime - startTime;
-                            timeDifference = currentTime - prevTime;
-                            
-                            if(timeDifference!=0){
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                            	aggregateOutputListQuery1.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + count);
-                            }
-                            prevTime = currentTime;
-                            latencyWithinEventCountWindow = 0;
-                        }
-                    
-                        count++;
-                	}
-                }
-            	
-
-            }
-
-        });
-
         Query2Part2 query2Part2 = new Query2Part2();
         ExecutionPlanRuntime executionPlanRuntimeQ2p2 = query2Part2.addExecutionPlan();
         getInputHandlerForQ2 = executionPlanRuntimeQ2p2.getInputHandler("profitStream");
 
-        executionPlanRuntimeQ2p2.addCallback("q2outputStream", new StreamCallback() {
-            long count = 1;
-            long currentTime = 0;
-            long latency = 0;
-            long totalLatency = 0;
-            long latencyFromBegining = 0;
-            long latencyWithinEventCountWindow = 0;
-            long startTime = System.currentTimeMillis();
-            long timeDifferenceFromStart = 0;
-            long timeDifference = 0; //This is the time difference for this time window.
-            long prevTime = 0;
 
-            @Override
-            public void receive(Event[] events) {
-//                EventPrinter.print(events);
-//                count = count + events.length;
-//                System.out.println("query2 output event count" + count);
-//
-//                currentTime = System.currentTimeMillis();
+        try {
+            executionPlanRuntimeQ1p1.addCallback("q1outputStream", new StreamCallback() {
 
+                public long prevTime = System.currentTimeMillis();
+                public long latencyWithinEventCountWindow;
+                FileWriter fw = new FileWriter(new File(logDir + "/output-1-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
+                BufferedWriter bw = new BufferedWriter(fw);
+                StringBuilder stringBuilder = new StringBuilder();
 
-                /*for (Event evt : events) {
-                    Object[] data = evt.getData();
-                    long eventOriginationTime = (Long) data[42];
-                    latency = eventOriginationTime == -1l ? -1l : (currentTime - eventOriginationTime);
-                    System.out.println(latency);
+                @Override
+                public void receive(Event[] events) {
 
-                }*/
+                    for (Event evt : events) {
 
-            	
-            	currentTime = System.currentTimeMillis();
-            	
-                for (Event evt : events) {
-                    Object[] data = evt.getData();
+                        Object[] data = evt.getData();
 
-                    long eventOriginationTime = (Long) data[42];
-                    //System.out.println("eventOriginationTime:"+eventOriginationTime);
-                    //latency = eventOriginationTime==-1l ? -1l:(currentTime - eventOriginationTime);
-                    latency = currentTime - eventOriginationTime;
-                    
-                    if(printOutputFlag){
-                        for(int i=0;i < 41; i++){
-                        	System.out.print(data[i] + ",");
-                        }
-                        
-                        System.out.println(latency);
-                    }
-            	
-            	    if(performanceLoggingFlag){
-                        latencyWithinEventCountWindow += latency;
-                        latencyFromBegining += latency;
-    
-                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
-                            timeDifferenceFromStart = currentTime - startTime;
-                            timeDifference = currentTime - prevTime;
-                            if(timeDifference!=0){
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                            	aggregateOutputListQuery2.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + count);
+                        if (printOutputFlag) {
+                            stringBuilder.append(data[0]);
+                            for (int i = 1; i < 22; i++) {
+                                stringBuilder.append(",");
+                                stringBuilder.append(data[i]);
                             }
-                            prevTime = currentTime;
-                            latencyWithinEventCountWindow = 0;
+                            stringBuilder.append("\r\n");
                         }
-                        count++;
-                    }
-            	}
-            	
-            }
-        });
 
+
+                        //If the performance logging flag is set, we need to print the performance measurements.
+                        if (performanceLoggingFlag) {
+
+                            long eventOriginationTime = (Long) data[22];
+                            long currentTime = System.currentTimeMillis();
+                            long latency = currentTime - eventOriginationTime;
+
+                            perfStats1.count++;
+                            perfStats1.totalLatency += latency;
+                            perfStats1.lastEventTime = currentTime;
+
+                            latencyWithinEventCountWindow += latency;
+                            long timeDifference = currentTime - prevTime;
+                            long timeDifferenceFromStart = currentTime - startTime;
+
+                            if (perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
+                                System.out.println("q1: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + perfStats1.count);
+                                prevTime = currentTime;
+                                latencyWithinEventCountWindow = 0;
+                            }
+                        }
+
+                    }
+                    if (printOutputFlag) {
+                        try {
+                            bw.write(stringBuilder.toString());
+                            bw.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            stringBuilder.setLength(0);
+                        }
+                    }
+
+                }
+
+            });
+
+
+            executionPlanRuntimeQ2p2.addCallback("q2outputStream", new StreamCallback() {
+
+                public long prevTime = System.currentTimeMillis();
+                public long latencyWithinEventCountWindow;
+                FileWriter fw = new FileWriter(new File(logDir + "/output-2-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
+                BufferedWriter bw = new BufferedWriter(fw);
+                StringBuilder stringBuilder = new StringBuilder();
+
+                @Override
+                public void receive(Event[] events) {
+
+                    for (Event evt : events) {
+                        Object[] data = evt.getData();
+
+                        if (printOutputFlag) {
+                            stringBuilder.append(data[0]);
+                            for (int i = 1; i < 41; i++) {
+                                stringBuilder.append(",");
+                                stringBuilder.append(data[i]);
+                            }
+                            stringBuilder.append("\r\n");
+                        }
+
+                        if (performanceLoggingFlag) {
+                            long currentTime = System.currentTimeMillis();
+                            long eventOriginationTime = (Long) data[42];
+                            long latency = currentTime - eventOriginationTime;
+
+                            perfStats2.count++;
+                            perfStats2.totalLatency += latency;
+                            perfStats2.lastEventTime = currentTime;
+
+                            latencyWithinEventCountWindow += latency;
+                            long timeDifference = currentTime - prevTime;
+                            long timeDifferenceFromStart = currentTime - startTime;
+
+                            if (perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
+                                System.out.println("q2: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + perfStats2.count);
+                                prevTime = currentTime;
+                                latencyWithinEventCountWindow = 0;
+                            }
+                        }
+                    }
+                    if (printOutputFlag) {
+                        try {
+                            bw.write(stringBuilder.toString());
+                            bw.flush();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            stringBuilder.setLength(0);
+                        }
+                    }
+                }
+            });
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         executionPlanRuntimeQ2p1.addCallback("profitStream", new StreamCallback() {
             @Override
@@ -206,18 +196,20 @@ public class Manager {
         executionPlanRuntimeQ1p1.start();
         executionPlanRuntimeQ2p2.start();
         executionPlanRuntimeQ2p1.start();
-        
-        if(performanceLoggingFlag){
-        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery1 = new PerformanceMonitoringThreadOutput("composite-query1", aggregateOutputListQuery1);
-        	performanceMonitorOutputThreadForQuery1.start();
-        	
-        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery2 = new PerformanceMonitoringThreadOutput("composite-query2", aggregateOutputListQuery2);
-        	performanceMonitorOutputThreadForQuery2.start();
-        }
+
+//        if (performanceLoggingFlag) {
+//            PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery1 = new PerformanceMonitoringThreadOutput("composite-query1", aggregateOutputListQuery1);
+//            performanceMonitorOutputThreadForQuery1.start();
+//
+//            PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery2 = new PerformanceMonitoringThreadOutput("composite-query2", aggregateOutputListQuery2);
+//            performanceMonitorOutputThreadForQuery2.start();
+//        }
 
         System.out.println("Data loading started.");
 
         loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), taxiTripsInputHandler);
+
+
         //Just make the main thread sleep infinitely
         //Note that we cannot have an event based mechanism to exit from this infinit loop. It is
         //because even if the data sending thread has completed its task of sending the data to
@@ -226,11 +218,38 @@ public class Manager {
         //terminating once we are done sending the data to the CEP engine.
         while (true) {
             try {
-                Thread.sleep(Constants.MAIN_THREAD_SLEEP_TIME);
+                if (lastEventTime1 == perfStats1.lastEventTime && lastEventTime2 == perfStats2.lastEventTime) {
+
+                    System.out.println();
+                    System.out.println("***** Query 1 *****");
+                    long timeDifferenceFromStart = perfStats1.lastEventTime - startTime;
+
+                    System.out.println("event outputed :" + perfStats1.count);
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats1.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("over all avg latency (ms) :" + (perfStats1.totalLatency / perfStats1.count));
+                    System.out.println();
+                    System.out.println("***** Query 2 *****");
+                    timeDifferenceFromStart = perfStats2.lastEventTime - startTime;
+
+                    System.out.println("event outputed :" + perfStats2.count);
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("over all avg latency (ms) :" + (perfStats2.totalLatency / perfStats2.count));
+                    break;
+                } else {
+                    lastEventTime1 = perfStats1.lastEventTime;
+                    lastEventTime2 = perfStats2.lastEventTime;
+                    Thread.sleep(Constants.MAIN_THREAD_SLEEP_TIME);
+                }
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+        executionPlanRuntimeQ2p1.shutdown();
+        executionPlanRuntimeQ2p2.shutdown();
+        executionPlanRuntimeQ1p1.shutdown();
+
     }
 
 
@@ -239,11 +258,17 @@ public class Manager {
         BufferedReader br;
         int count = 0;
 
-        long startTime=System.currentTimeMillis();
         try {
             br = new BufferedReader(new FileReader(fileName), 10 * 1024 * 1024);
             String line = br.readLine();
+            startTime = System.currentTimeMillis();
             while (line != null) {
+
+                if (dataSetSize == events) {
+                    break;
+                }
+                events++;
+
                 //We make an assumption here that we do not get empty strings due to missing values that may present in the input data set.
                 Iterator<String> dataStrIterator = splitter.split(line).iterator();
                 String medallion = dataStrIterator.next();
@@ -264,40 +289,40 @@ public class Manager {
 
                 long currentTIme = System.currentTimeMillis();
                 float pickupLongitude = Float.parseFloat(pickup_longitude);
-                
-                try{
+
+                try {
                     if (-74.916578f > pickupLongitude || -73.120778f < pickupLongitude) {
                         line = br.readLine();
                         continue;
                     }
-    
+
                     float pickupLatitude = Float.parseFloat(pickup_latitude);
-    
+
                     if (40.129715978f > pickupLatitude || 41.477182778f < pickupLatitude) {
                         line = br.readLine();
                         continue;
                     }
-    
-    
+
+
                     float dropoffLongitude = Float.parseFloat(dropoff_longitude);
-    
+
                     if (-74.916578f > dropoffLongitude || -73.120778f < dropoffLongitude) {
                         line = br.readLine();
                         continue;
                     }
-    
+
                     float dropoffLatitude = Float.parseFloat(dropoff_latitude);
-    
+
                     if (40.129715978f > dropoffLatitude || 41.477182778f < dropoffLatitude) {
                         line = br.readLine();
                         continue;
                     }
-                }catch(NumberFormatException e){
-                	//We do nothing here. This is due having odd values for lat, lon values.
-                	 line = br.readLine();
-                	continue;
+                } catch (NumberFormatException e) {
+                    //We do nothing here. This is due having odd values for lat, lon values.
+                    line = br.readLine();
+                    continue;
                 }
-                
+
                 float fareAmount = Float.parseFloat(fare_amount);
                 float tipAmount = Float.parseFloat(tip_amount);
                 float totalAmount;
@@ -338,14 +363,18 @@ public class Manager {
                 count++;
             }
 
-            System.out.println("Total amount of events read : " + count);
-            System.out.println("Total time taken for read : " + (System.currentTimeMillis()-startTime));
+            long currentTime = System.currentTimeMillis();
+            System.out.println();
+            System.out.println("****** Input ******");
+            System.out.println("events read : " + count);
+            System.out.println("time to read (ms) : " + (currentTime - startTime));
+            System.out.println("read throughput (events/s) : " + (events * 1000 / (currentTime - startTime)));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Throwable e) {
             e.printStackTrace();
         }
-        System.out.println("Now exiting from data loader thread.");
+        System.out.println("Now exiting from data loader");
     }
 
 }

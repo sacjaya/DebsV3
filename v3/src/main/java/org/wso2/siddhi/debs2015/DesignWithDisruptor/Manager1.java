@@ -45,6 +45,8 @@ public class Manager1 {
 
     private AtomicLong eventSizeInDisruptorDataLoader = new AtomicLong(0l);
     private long eventCount;
+    private volatile long disruptorEvents;
+    private volatile long events;
 
     public static void main(String[] args) {
         Manager1 manager = new Manager1();
@@ -52,6 +54,8 @@ public class Manager1 {
     }
 
     private void run() {
+
+        eventCount = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
 
         Query2Part1 query2Part1 = new Query2Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ2p1 = query2Part1.addExecutionPlan();
@@ -136,7 +140,6 @@ public class Manager1 {
         executionPlanRuntimeQ2p1.start();
 
 
-
         Disruptor<StringHolder> dataLoaderDisruptor = new Disruptor<StringHolder>(new com.lmax.disruptor.EventFactory<StringHolder>() {
             @Override
             public StringHolder newInstance() {
@@ -154,127 +157,138 @@ public class Manager1 {
             public void onEvent(StringHolder stringHolder, long l, boolean b) throws Exception {
                 lines.add(stringHolder.string);
                 eventSizeInDisruptorDataLoader.decrementAndGet();
-                eventCount++;
-                if (eventCount % 1000000 == 0) {
-                    System.out.println("Number of events in the disruptor:" + eventSizeInDisruptorDataLoader.get()+"\nThread:"+Thread.currentThread().getName());
+                disruptorEvents++;
+                if (disruptorEvents % 1000000 == 0) {
+                    System.out.println("Number of events in the disruptor:" + eventSizeInDisruptorDataLoader.get() + "\nThread:" + Thread.currentThread().getName());
                 }
+
                 if (b) {
-
                     for (String line : lines) {
-                        Iterator<String> dataStrIterator = splitter.split(line).iterator();
-                        String medallion = dataStrIterator.next();
-                        String hack_license = dataStrIterator.next();
-                        String pickup_datetime = dataStrIterator.next();
-                        String dropoff_datetime = dataStrIterator.next();
-                        String trip_time_in_secs = dataStrIterator.next();
-                        String trip_distance = dataStrIterator.next();
-                        String pickup_longitude = dataStrIterator.next();
-                        String pickup_latitude = dataStrIterator.next();
-                        String dropoff_longitude = dataStrIterator.next();
-                        String dropoff_latitude = dataStrIterator.next();
-                        dataStrIterator.next();
-                        String fare_amount = dataStrIterator.next();
-                        dataStrIterator.next();
-                        dataStrIterator.next();
-                        String tip_amount = dataStrIterator.next();
-
-                        long currentTIme = System.currentTimeMillis();
-                        float pickupLongitude = Float.parseFloat(pickup_longitude);
-
-                        if (-74.916578f > pickupLongitude || -73.120778f < pickupLongitude) {
-                            continue;
-                        }
-
-                        float pickupLatitude = Float.parseFloat(pickup_latitude);
-
-                        if (40.129715978f > pickupLatitude || 41.477182778f < pickupLatitude) {
-                            continue;
-                        }
-
-
-                        float dropoffLongitude = Float.parseFloat(dropoff_longitude);
-
-                        if (-74.916578f > dropoffLongitude || -73.120778f < dropoffLongitude) {
-                            continue;
-                        }
-
-                        float dropoffLatitude = Float.parseFloat(dropoff_latitude);
-
-                        if (40.129715978f > dropoffLatitude || 41.477182778f < dropoffLatitude) {
-                            continue;
-                        }
-                        float fareAmount = Float.parseFloat(fare_amount);
-                        float tipAmount = Float.parseFloat(tip_amount);
-                        float totalAmount;
-
-                        if (fareAmount < 0 || tipAmount < 0) {
-                            totalAmount = -1f;
-                        } else {
-                            totalAmount = fareAmount + tipAmount;
-                        }
-
-                        Object[] eventData = null;
-
                         try {
-                            eventData = new Object[]{medallion,
-                                    hack_license,
-                                    pickup_datetime,
-                                    dropoff_datetime,
-                                    Short.parseShort(trip_time_in_secs),
-                                    Float.parseFloat(trip_distance), //This can be represented by two bytes
-                                    pickup_longitude,
-                                    pickup_latitude,
-                                    dropoff_longitude,
-                                    dropoff_latitude,
-                                    totalAmount,
-                                    currentTIme
-                            }; //We need to attach the time when we are injecting an event to the query network. For that we have to set a separate field which will be populated when we are injecting an event to the input stream.
-                        } catch (NumberFormatException e) {
-                            //e.printStackTrace();
-                            //If we find a discrepancy in converting data, then we have to discard that
-                            //particular event.
-                            continue;
-                        }
+                            Iterator<String> dataStrIterator = splitter.split(line).iterator();
+                            String medallion = dataStrIterator.next();
+                            String hack_license = dataStrIterator.next();
+                            String pickup_datetime = dataStrIterator.next();
+                            String dropoff_datetime = dataStrIterator.next();
+                            String trip_time_in_secs = dataStrIterator.next();
+                            String trip_distance = dataStrIterator.next();
+                            String pickup_longitude = dataStrIterator.next();
+                            String pickup_latitude = dataStrIterator.next();
+                            String dropoff_longitude = dataStrIterator.next();
+                            String dropoff_latitude = dataStrIterator.next();
+                            dataStrIterator.next();
+                            String fare_amount = dataStrIterator.next();
+                            dataStrIterator.next();
+                            dataStrIterator.next();
+                            String tip_amount = dataStrIterator.next();
 
-                        taxiTripsInputHandler.send(eventData);
+                            long currentTIme = System.currentTimeMillis();
+                            float pickupLongitude = Float.parseFloat(pickup_longitude);
+
+                            if (-74.916578f > pickupLongitude || -73.120778f < pickupLongitude) {
+                                continue;
+                            }
+
+                            float pickupLatitude = Float.parseFloat(pickup_latitude);
+
+                            if (40.129715978f > pickupLatitude || 41.477182778f < pickupLatitude) {
+                                continue;
+                            }
+
+
+                            float dropoffLongitude = Float.parseFloat(dropoff_longitude);
+
+                            if (-74.916578f > dropoffLongitude || -73.120778f < dropoffLongitude) {
+                                continue;
+                            }
+
+                            float dropoffLatitude = Float.parseFloat(dropoff_latitude);
+
+                            if (40.129715978f > dropoffLatitude || 41.477182778f < dropoffLatitude) {
+                                continue;
+                            }
+                            float fareAmount = Float.parseFloat(fare_amount);
+                            float tipAmount = Float.parseFloat(tip_amount);
+                            float totalAmount;
+
+                            if (fareAmount < 0 || tipAmount < 0) {
+                                totalAmount = -1f;
+                            } else {
+                                totalAmount = fareAmount + tipAmount;
+                            }
+
+                            Object[] eventData = null;
+
+                            try {
+                                eventData = new Object[]{medallion,
+                                        hack_license,
+                                        pickup_datetime,
+                                        dropoff_datetime,
+                                        Short.parseShort(trip_time_in_secs),
+                                        Float.parseFloat(trip_distance), //This can be represented by two bytes
+                                        pickup_longitude,
+                                        pickup_latitude,
+                                        dropoff_longitude,
+                                        dropoff_latitude,
+                                        totalAmount,
+                                        currentTIme
+                                }; //We need to attach the time when we are injecting an event to the query network. For that we have to set a separate field which will be populated when we are injecting an event to the input stream.
+                            } catch (NumberFormatException e) {
+                                //e.printStackTrace();
+                                //If we find a discrepancy in converting data, then we have to discard that
+                                //particular event.
+                                continue;
+                            }
+
+                            taxiTripsInputHandler.send(eventData);
+                        } catch (NumberFormatException n) {
+
+//                            System.out.println(line);
+//                            throw new RuntimeException(t);
+                        }
                     }
                     lines.clear();
                 }
-            }
-        });
 
-        dataLoaderDisruptor.start();
-
-        System.out.println("Data loading started.");
-
-
-        //Load the data from the input data set file. If the "incrementalloading" flag is set to
-        //true, the file will be read by the data loader thread in a sequence of time intervals.
-        //If the flag is false, the entire data set will be read and buffered in the RAM after
-        //this method gets called.
-        //loadEventsFromFile(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"));
-
-        System.out.println("Incremental data loading is performed.");
-
-
-        loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), dataLoaderDisruptor);
-        //Just make the main thread sleep infinitely
-        //Note that we cannot have an event based mechanism to exit from this infinit loop. It is
-        //because even if the data sending thread has completed its task of sending the data to
-        //the SiddhiManager, the SiddhiManager object may be conducting the processing of the remaining
-        //data. Furthermore, since this is CEP its better have this type of mechanism, rather than
-        //terminating once we are done sending the data to the CEP engine.
-        while (true) {
-            try {
-                Thread.sleep(Constants.MAIN_THREAD_SLEEP_TIME);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
         }
 
-        //executionPlanRuntime.shutdown();
+        );
 
+    dataLoaderDisruptor.start();
+
+    System.out.println("Data loading started.");
+
+
+    //Load the data from the input data set file. If the "incrementalloading" flag is set to
+    //true, the file will be read by the data loader thread in a sequence of time intervals.
+    //If the flag is false, the entire data set will be read and buffered in the RAM after
+    //this method gets called.
+    //loadEventsFromFile(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"));
+
+    System.out.println("Incremental data loading is performed.");
+
+
+    loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"),dataLoaderDisruptor
+
+    );
+    //Just make the main thread sleep infinitely
+    //Note that we cannot have an event based mechanism to exit from this infinit loop. It is
+    //because even if the data sending thread has completed its task of sending the data to
+    //the SiddhiManager, the SiddhiManager object may be conducting the processing of the remaining
+    //data. Furthermore, since this is CEP its better have this type of mechanism, rather than
+    //terminating once we are done sending the data to the CEP engine.
+    while(true){
+        try {
+            Thread.sleep(Constants.MAIN_THREAD_SLEEP_TIME);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
+
+    //executionPlanRuntime.shutdown();
+
+}
 
 
     public void loadData(String fileName, Disruptor<StringHolder> dataLoaderDisruptor) {
@@ -289,7 +303,10 @@ public class Manager1 {
             RingBuffer<StringHolder> ringBuffer = dataLoaderDisruptor.getRingBuffer();
 
             while (line != null) {
-
+                if(events==eventCount){
+                    break;
+                }
+                events++;
                 long sequenceNo = ringBuffer.next();
                 try {
                     StringHolder stringHolder = ringBuffer.get(sequenceNo);
@@ -313,9 +330,9 @@ public class Manager1 {
         System.out.println("Now exiting from data loader thread.");
     }
 
-    class StringHolder {
-        String string;
-    }
+class StringHolder {
+    String string;
+}
 
 }
 
