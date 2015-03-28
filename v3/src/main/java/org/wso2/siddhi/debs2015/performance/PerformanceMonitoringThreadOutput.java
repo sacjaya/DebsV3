@@ -52,7 +52,7 @@ public class PerformanceMonitoringThreadOutput extends Thread {
 		try {
             fw = new FileWriter(new File(statisticsDir + "/" + preamble + "-output-stats-" + timeStamp + ".csv").getAbsoluteFile());
 			bw = new BufferedWriter(fw);
-			bw.write("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s)\r\n");
+			bw.write("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
         } catch (IOException e1) {
             e1.printStackTrace();
         }

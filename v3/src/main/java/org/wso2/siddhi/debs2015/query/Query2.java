@@ -7,6 +7,7 @@ import org.wso2.siddhi.core.config.SiddhiContext;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
+import org.wso2.siddhi.core.util.EventPrinter;
 import org.wso2.siddhi.debs2015.extensions.cellId.CellIdFunctionForQuery2;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKTimeTransformerForQuery2;
 import org.wso2.siddhi.debs2015.extensions.median.MedianAggregator;
@@ -413,7 +414,7 @@ public class Query2 {
             eventBufferList = new LinkedBlockingQueue<Object[]>(Constants.EVENT_BUFFER_SIZE);
             DataLoderThread dataLoaderThread = new DataLoderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
-            EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
+            EventSenderThread senderThread = new EventSenderThread(eventBufferList, inputHandler);
 
             //start the data loading process
             dataLoaderThread.start();
@@ -424,7 +425,7 @@ public class Query2 {
             eventBufferList = new LinkedBlockingQueue<Object[]>();
             //BatchDataLoaderThread dataLoaderThread = new BatchDataLoaderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
             InputHandler inputHandler = executionPlanRuntime.getInputHandler("taxi_trips");
-            EventSenderThread senderThread = new EventSenderThread(eventBufferList, aggregateInputList, inputHandler);
+            EventSenderThread senderThread = new EventSenderThread(eventBufferList, inputHandler);
             DataLoderThread dataLoaderThread = new DataLoderThread(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), eventBufferList);
 
             //start the data loading process
