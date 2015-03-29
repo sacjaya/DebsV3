@@ -1,25 +1,23 @@
 package org.wso2.siddhi.debs2015.DesignWithDisruptor;
 
 import com.google.common.base.Splitter;
-
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.debs2015.performance.PerfStats;
-import org.wso2.siddhi.debs2015.performance.PerformanceMonitoringThreadOutput;
 import org.wso2.siddhi.debs2015.util.Config;
 import org.wso2.siddhi.debs2015.util.Constants;
 
 import java.io.*;
 import java.util.Iterator;
-//import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Manager {
 
     private InputHandler inputHandlerForQ1;
     private InputHandler getInputHandlerForQ2;
+    private InputHandler getInputHandlerForQ2_3;
     volatile long events = 0;
     volatile long dataSetSize;
     private long startTime;
@@ -53,6 +51,11 @@ public class Manager {
         Query2Part2 query2Part2 = new Query2Part2();
         ExecutionPlanRuntime executionPlanRuntimeQ2p2 = query2Part2.addExecutionPlan();
         getInputHandlerForQ2 = executionPlanRuntimeQ2p2.getInputHandler("profitStream");
+
+        Query2Part3 query2Part3 = new Query2Part3();
+        ExecutionPlanRuntime executionPlanRuntimeQ2p3 = query2Part3.addExecutionPlan();
+        getInputHandlerForQ2_3 = executionPlanRuntimeQ2p3.getInputHandler("profitRawData");
+
 
         try {
             executionPlanRuntimeQ1p1.addCallback("q1outputStream", new StreamCallback() {
@@ -120,7 +123,7 @@ public class Manager {
             });
 
 
-            executionPlanRuntimeQ2p2.addCallback("q2outputStream", new StreamCallback() {
+            executionPlanRuntimeQ2p3.addCallback("q2outputStream", new StreamCallback() {
 
                 public long prevTime = System.currentTimeMillis();
                 public long latencyWithinEventCountWindow;
@@ -196,28 +199,28 @@ public class Manager {
             }
         });
 
+        executionPlanRuntimeQ2p2.addCallback("profitRawData", new StreamCallback() {
+            @Override
+            public void receive(Event[] events) {
+                try {
+                    getInputHandlerForQ2_3.send(events);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }
+        });
+
 
         executionPlanRuntimeQ1p1.start();
+        executionPlanRuntimeQ2p3.start();
         executionPlanRuntimeQ2p2.start();
         executionPlanRuntimeQ2p1.start();
-        
-//        if(performanceLoggingFlag){
-//        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery1 = new PerformanceMonitoringThreadOutput("performance-thread-composite-query1", aggregateOutputListQuery1);
-//        	performanceMonitorOutputThreadForQuery1.start();
-//        	
-//        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery2 = new PerformanceMonitoringThreadOutput("performance-thread-composite-query2", aggregateOutputListQuery2);
-//        	performanceMonitorOutputThreadForQuery2.start();
-//        }
 
         System.out.println("Data loading started.");
 
         loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), taxiTripsInputHandler);
-        //Just make the main thread sleep infinitely
-        //Note that we cannot have an event based mechanism to exit from this infinit loop. It is
-        //because even if the data sending thread has completed its task of sending the data to
-        //the SiddhiManager, the SiddhiManager object may be conducting the processing of the remaining
-        //data. Furthermore, since this is CEP its better have this type of mechanism, rather than
-        //terminating once we are done sending the data to the CEP engine.
+
         while (true) {
             try {
                 if (lastEventTime1 == perfStats1.lastEventTime && lastEventTime2 == perfStats2.lastEventTime) {
@@ -250,6 +253,7 @@ public class Manager {
         }
         
         executionPlanRuntimeQ2p1.shutdown();
+        executionPlanRuntimeQ2p3.shutdown();
         executionPlanRuntimeQ2p2.shutdown();
         executionPlanRuntimeQ1p1.shutdown();
     }
