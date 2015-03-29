@@ -372,12 +372,12 @@ public class Query2 {
                         latencyWithinEventCountWindow += latency;
                         latencyFromBegining += latency;
     
-                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                        if (count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) {
                             timeDifferenceFromStart = currentTime - startTime;
                             timeDifference = currentTime - prevTime;
                             if(timeDifference!=0){
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)>
-                                aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference));
+                                aggregateOutputList.add(timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(latencyFromBegining * 1.0d / count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2) + "," + Math.round(count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 * 1000.0d / timeDifference));
                             }
                             prevTime = currentTime;
                             latencyWithinEventCountWindow = 0;

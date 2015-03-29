@@ -35,6 +35,7 @@ public class PerformanceMonitoringThreadOutput extends Thread {
 	private String preamble;
 	
 	public PerformanceMonitoringThreadOutput(String name, LinkedBlockingQueue<String> aggregateOutputList){
+		super(name);
 		this.aggregateOutputList = aggregateOutputList;
 		this.preamble = name;
 	}

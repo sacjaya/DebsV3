@@ -1,16 +1,19 @@
 package org.wso2.siddhi.debs2015.DesignWithDisruptor;
 
 import com.google.common.base.Splitter;
+
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.event.Event;
 import org.wso2.siddhi.core.stream.input.InputHandler;
 import org.wso2.siddhi.core.stream.output.StreamCallback;
 import org.wso2.siddhi.debs2015.performance.PerfStats;
+import org.wso2.siddhi.debs2015.performance.PerformanceMonitoringThreadOutput;
 import org.wso2.siddhi.debs2015.util.Config;
 import org.wso2.siddhi.debs2015.util.Constants;
 
 import java.io.*;
 import java.util.Iterator;
+//import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Manager {
@@ -34,13 +37,14 @@ public class Manager {
     private void run() {
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
-        dataSetSize = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
+        
+    	dataSetSize = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
         final String logDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
-
-
+    	
         Query2Part1 query2Part1 = new Query2Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ2p1 = query2Part1.addExecutionPlan();
         InputHandler taxiTripsInputHandler = executionPlanRuntimeQ2p1.getInputHandler("taxi_trips");
+
 
         Query1Part1 query1Part1 = new Query1Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ1p1 = query1Part1.addExecutionPlan();
@@ -49,7 +53,6 @@ public class Manager {
         Query2Part2 query2Part2 = new Query2Part2();
         ExecutionPlanRuntime executionPlanRuntimeQ2p2 = query2Part2.addExecutionPlan();
         getInputHandlerForQ2 = executionPlanRuntimeQ2p2.getInputHandler("profitStream");
-
 
         try {
             executionPlanRuntimeQ1p1.addCallback("q1outputStream", new StreamCallback() {
@@ -92,9 +95,9 @@ public class Manager {
                             long timeDifference = currentTime - prevTime;
                             long timeDifferenceFromStart = currentTime - startTime;
 
-                            if (perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                            if (perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q1: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + perfStats1.count);
+                                System.out.println("q1: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }
@@ -153,9 +156,9 @@ public class Manager {
                             long timeDifference = currentTime - prevTime;
                             long timeDifferenceFromStart = currentTime - startTime;
 
-                            if (perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT == 0) {
+                            if (perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q2: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT * 1000.0d / timeDifference) + "," + perfStats2.count);
+                                System.out.println("q2: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 * 1000.0d / timeDifference) + "," + perfStats2.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }
@@ -179,6 +182,7 @@ public class Manager {
             e.printStackTrace();
         }
 
+
         executionPlanRuntimeQ2p1.addCallback("profitStream", new StreamCallback() {
             @Override
             public void receive(Event[] events) {
@@ -196,20 +200,18 @@ public class Manager {
         executionPlanRuntimeQ1p1.start();
         executionPlanRuntimeQ2p2.start();
         executionPlanRuntimeQ2p1.start();
-
-//        if (performanceLoggingFlag) {
-//            PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery1 = new PerformanceMonitoringThreadOutput("composite-query1", aggregateOutputListQuery1);
-//            performanceMonitorOutputThreadForQuery1.start();
-//
-//            PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery2 = new PerformanceMonitoringThreadOutput("composite-query2", aggregateOutputListQuery2);
-//            performanceMonitorOutputThreadForQuery2.start();
+        
+//        if(performanceLoggingFlag){
+//        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery1 = new PerformanceMonitoringThreadOutput("performance-thread-composite-query1", aggregateOutputListQuery1);
+//        	performanceMonitorOutputThreadForQuery1.start();
+//        	
+//        	PerformanceMonitoringThreadOutput performanceMonitorOutputThreadForQuery2 = new PerformanceMonitoringThreadOutput("performance-thread-composite-query2", aggregateOutputListQuery2);
+//        	performanceMonitorOutputThreadForQuery2.start();
 //        }
 
         System.out.println("Data loading started.");
 
         loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"), taxiTripsInputHandler);
-
-
         //Just make the main thread sleep infinitely
         //Note that we cannot have an event based mechanism to exit from this infinit loop. It is
         //because even if the data sending thread has completed its task of sending the data to
@@ -246,10 +248,10 @@ public class Manager {
                 e.printStackTrace();
             }
         }
+        
         executionPlanRuntimeQ2p1.shutdown();
         executionPlanRuntimeQ2p2.shutdown();
         executionPlanRuntimeQ1p1.shutdown();
-
     }
 
 
