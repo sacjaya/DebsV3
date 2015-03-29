@@ -4,20 +4,20 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
  * Created by sachini on 3/17/15.
  */
 public class CustomObj{
-    String cellID;
+    int cellID;
     double profit_per_taxi;
     Object profit;
     Object emptyTaxiCount;
 
 
-    public CustomObj(String cellID,double profit_per_taxi,Object profit,Object emptyTaxiCount){
+    public CustomObj(int cellID,double profit_per_taxi,Object profit,Object emptyTaxiCount){
         this.cellID = cellID;
         this.profit_per_taxi = profit_per_taxi;
         this.profit = profit;
         this.emptyTaxiCount = emptyTaxiCount;
     }
 
-    public String getCellID() {
+    public int getCellID() {
         return cellID;
     }
 
@@ -35,10 +35,7 @@ public class CustomObj{
 
     @Override
     public boolean equals(Object obj) {
-        if(obj instanceof CustomObj) {
-            return cellID.equals(((CustomObj) obj).getCellID());
-        }
-        return  false;
+        return obj instanceof CustomObj && cellID == ((CustomObj) obj).getCellID();
     }
 
 

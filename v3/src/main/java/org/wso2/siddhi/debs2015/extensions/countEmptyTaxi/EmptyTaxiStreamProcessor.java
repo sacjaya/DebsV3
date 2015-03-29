@@ -25,7 +25,7 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
     private static final Logger LOGGER = Logger.getLogger(EmptyTaxiStreamProcessor.class);
     private boolean debugEnabled = false;
 
-    private Map<String, Object[]> medallionMap = new HashMap<String, Object[]>();
+    private Map<Integer, Object[]> medallionMap = new HashMap<Integer, Object[]>();
     private LinkedList<Object[]> taxiInfoWindow = new LinkedList<Object[]>();
 
     //The K value
@@ -43,7 +43,7 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
 
         List<Attribute> attributeList = new ArrayList<Attribute>();
 
-        attributeList.add(new Attribute("cellNo" , Attribute.Type.STRING));
+        attributeList.add(new Attribute("cellNo" , Attribute.Type.INT));
         attributeList.add(new Attribute("emptyTaxiCount" , Attribute.Type.INT));
 
         return attributeList;
@@ -76,7 +76,7 @@ public class EmptyTaxiStreamProcessor extends StreamProcessor {
 
         eventChunk.add(createEvent(new Object[]{inputData[0],1}));
 
-        Object[] previousDropoff = medallionMap.put((String) inputData[0], inputData);
+        Object[] previousDropoff = medallionMap.put((Integer) inputData[0], inputData);
         if(previousDropoff != null){
             eventChunk.add(createEvent(new Object[]{previousDropoff[0],-1}));
         }

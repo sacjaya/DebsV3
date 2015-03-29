@@ -50,7 +50,7 @@ public class Query1Part1 {
         siddhiContext.setSiddhiExtensions(extensions);
 
 
-        String inputStream = " define stream profitStream ( profit float, startCellNo string, endCellNo string , pickup_datetime long ,  dropoff_datetime long ,  medallion string ," +
+        String inputStream = " define stream profitStream ( profit float, startCellNo int, endCellNo int , pickup_datetime long ,  dropoff_datetime long ,  medallion string ," +
                 "pickup_datetime_org string, dropoff_datetime_org string , iij_timestamp long ); ";
 
 

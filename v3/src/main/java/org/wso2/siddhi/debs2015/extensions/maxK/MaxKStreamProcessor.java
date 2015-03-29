@@ -108,16 +108,17 @@ public class MaxKStreamProcessor extends StreamProcessor {
         Object[] data =  new Object[2 * kValue+1];
 
         boolean isCurrent = (Boolean)object[0];//This is the trip count
-        Object startCellValue = object[1];
-        Object endCellValue = object[2];
+        int startCell = (Integer)object[1];
+        int leftCell = (Integer)object[2];
+
+        int startCellValue = Math.round((float)((startCell/1000))/2)*1000   + Math.round((float)((startCell%1000))/2);
+        int endCellValue = Math.round((float)(leftCell/1000)/2)*1000 + Math.round((float)((leftCell%1000))/2);
 
 
-
-        LinkedList<String> currentTopK;
+        LinkedList<Long> currentTopK;
 
         //The method getMaxK() accepts the "<start cell ID>:<end cell ID>" and the trip count found for this route.
-
-        currentTopK = maxKStore.getMaxK(startCellValue+":"+endCellValue, isCurrent, kValue);
+        currentTopK = maxKStore.getMaxK(((long)(startCellValue))*1000000 +(long)endCellValue, isCurrent, kValue);
 
         if(currentTopK == null){
             return null;
@@ -128,13 +129,14 @@ public class MaxKStreamProcessor extends StreamProcessor {
 
             //This will be restricted to to k number of lists. Therefore, we do not need to check whether we have exceeded the top k.
             //We do this until top-k is 10 (kValue==10)
-            for (String cell : currentTopK) {
+            for (long cell : currentTopK) {
                 //String[] splitValues = cell.split(":");
-                int colonIndex = cell.indexOf(":");
                 //System.out.println("cell|"+cell+"|"+cell.substring(0, colonIndex)+"|"+cell.substring(colonIndex+1));
+                long startCellIntValue = cell/1000000 ;
+                data[position++] =(startCellIntValue/1000)+"."+(startCellIntValue%1000);//profitable_cell_id_
 
-                data[position++] = cell.substring(0, colonIndex);//start cell ID
-                data[position++] = cell.substring(colonIndex + 1);//end cell ID
+                long endCellIntValue = cell%1000000 ;
+                data[position++] =(endCellIntValue/1000)+"."+(endCellIntValue%1000);//profitable_cell_id_
             }
 
             //Populating remaining elements for the payload of the stream with null if we could not find the top-k number of routes.

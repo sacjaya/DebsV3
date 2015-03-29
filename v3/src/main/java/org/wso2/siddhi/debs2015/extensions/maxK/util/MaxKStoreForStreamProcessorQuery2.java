@@ -22,7 +22,7 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
 import java.util.*;
 
 public class MaxKStoreForStreamProcessorQuery2 {
-    private Map<String, Double> routeFrequencies = new HashMap<String, Double>(); //a reverse index of which the key is the cell ID and the value is the profitability.
+    private Map<Integer, Double> routeFrequencies = new HashMap<Integer, Double>(); //a reverse index of which the key is the cell ID and the value is the profitability.
     private Map<Double, ArrayList<CustomObj>> reverseLookup = new TreeMap<Double, ArrayList<CustomObj>>(
             new Comparator<Double>() {
                 public int compare(Double o1, Double o2) {
@@ -31,6 +31,7 @@ public class MaxKStoreForStreamProcessorQuery2 {
             }
     );    //The reverseLookup TreeMap holds the list of cells for each count.
     private double lastReturnedLeastProfitability = 0;
+    LinkedList<CustomObj> lastResult;
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
 //
 //        public int compare(Integer o1, Integer o2) {
@@ -49,7 +50,7 @@ public class MaxKStoreForStreamProcessorQuery2 {
      * @params date - The timestamp the pressure reading was produced.
      */
     public LinkedList<CustomObj> getMaxK(CustomObj customObj, boolean isCurrent, int k) {
-        String cell = customObj.getCellID();
+        int cell = customObj.getCellID();
         Double currentProfit = (Double) customObj.getProfit_per_taxi();
 
         Double previousProfit = routeFrequencies.get(customObj.getCellID());
@@ -118,7 +119,22 @@ public class MaxKStoreForStreamProcessorQuery2 {
             }
         }
 
-        return result;
+
+        if (lastResult == null || lastResult.size() != result.size()) {
+            lastResult = result;
+            return result;
+        } else {
+            for (int i = 0; i < result.size(); i++) {
+                if (result.get(i) != lastResult.get(i)) {
+                    lastResult = result;
+                    return result;
+                }
+            }
+        }
+
+
+        return null;
+
 
     }
 

@@ -105,7 +105,7 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
         Double eventKeyValue = (Double) object[1];//This is the profit_per_taxi
         Object profitValue = object[2];
         Object emptyTaxiCountValue = object[3];
-        String cellValue = (String) object[4];
+        int cellValue = (Integer)object[4];
 
         //Map<Double, List<CustomObj>> currentTopK;
         LinkedList<CustomObj> currentTopK;
@@ -131,7 +131,8 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
                 //We do this until top-k is 10 (kValue==10)
                 //for (int i = cellList.size()-1 ; i >= 0 ; i--){
                 //CustomObj customObj = cellList.get(i);
-                data[position++] = customObj.getCellID();//profitable_cell_id_
+                int cellIntValue = customObj.getCellID();
+                data[position++] =(cellIntValue/1000)+"."+(cellIntValue%1000);//profitable_cell_id_
                 data[position++] = customObj.getEmptyTaxiCount();//empty_taxies_in_cell_id_
                 data[position++] = customObj.getProfit();//median_profit_in_cell_id_
                 data[position++] = customObj.getProfit_per_taxi();//profitability_of_cell_

@@ -22,8 +22,8 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
 import java.util.*;
 
 public class MaxKStoreForStreamProcessor {
-    private Map<String, Integer> routeFrequencies = new HashMap<String, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
-    private Map<Integer, ArrayList<String>> reverseLookup = new TreeMap<Integer, ArrayList<String>>(
+    private Map<Long, Integer> routeFrequencies = new HashMap<Long, Integer>(); //a reverse index of which the key is the cell ID and the value is the count.
+    private Map<Integer, ArrayList<Long>> reverseLookup = new TreeMap<Integer, ArrayList<Long>>(
             new Comparator<Integer>() {
                 public int compare(Integer o1, Integer o2) {
                     return o2.compareTo(o1);
@@ -31,6 +31,7 @@ public class MaxKStoreForStreamProcessor {
             }
     );    //The reverseLookup TreeMap holds the list of cells for each count.
     private int lastReturnedLeastFrequency = 0;
+    private LinkedList<Long> lastResult = null;
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
 //
 //        public int compare(Integer o1, Integer o2) {
@@ -48,7 +49,7 @@ public class MaxKStoreForStreamProcessor {
      * @params value - The pressure reading value for the current event
      * @params date - The timestamp the pressure reading was produced.
      */
-    public LinkedList<String> getMaxK(String cell, boolean isCurrent, int k) {
+    public LinkedList<Long> getMaxK(long cell, boolean isCurrent, int k) {
         Integer previousCount = routeFrequencies.get(cell);
 
         if (previousCount == null) {
@@ -71,14 +72,14 @@ public class MaxKStoreForStreamProcessor {
 
             routeFrequencies.put(cell, newTripCount);
 
-            ArrayList<String> cellsList = reverseLookup.get(newTripCount);
+            ArrayList<Long> cellsList = reverseLookup.get(newTripCount);
 
             if (cellsList != null) {
                 if (cellsList.size() == 10)
                     cellsList.remove(0);
                 cellsList.add(cell);
             } else {
-                cellsList = new ArrayList<String>();
+                cellsList = new ArrayList<Long>();
                 cellsList.add(cell);
                 reverseLookup.put(newTripCount, cellsList);
             }
@@ -99,17 +100,17 @@ public class MaxKStoreForStreamProcessor {
         //18-->[146.164]
         //8-->[144.162,147.168,144.165,146.168]
 
-        Set<Map.Entry<Integer, ArrayList<String>>> entrySet = ((TreeMap)reverseLookup).entrySet();
-        Iterator<Map.Entry<Integer, ArrayList<String>>> itr = entrySet.iterator();
+        Set<Map.Entry<Integer, ArrayList<Long>>> entrySet = ((TreeMap)reverseLookup).entrySet();
+        Iterator<Map.Entry<Integer, ArrayList<Long>>> itr = entrySet.iterator();
 
         int cntr = 0;
-        LinkedList<String> result = new LinkedList<String>();
+        LinkedList<Long> result = new LinkedList<Long>();
 
 
         while(itr.hasNext()){
-            Map.Entry<Integer, ArrayList<String>> item = itr.next();
+            Map.Entry<Integer, ArrayList<Long>> item = itr.next();
             lastReturnedLeastFrequency = item.getKey();
-            ArrayList<String> currentCells = item.getValue();
+            ArrayList<Long> currentCells = item.getValue();
             int currentCellSize = currentCells.size();
 
             if(currentCells.size() > 0){
@@ -129,7 +130,21 @@ public class MaxKStoreForStreamProcessor {
             }
         }
 
-        return result;
+
+        if (lastResult == null || lastResult.size() != result.size()) {
+            lastResult = result;
+            return result;
+        } else {
+            for (int i = 0; i < result.size(); i++) {
+                if (result.get(i) != lastResult.get(i)) {
+                    lastResult = result;
+                    return result;
+                }
+            }
+        }
+
+
+        return null;
 
     }
 

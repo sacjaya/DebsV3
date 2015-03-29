@@ -56,7 +56,7 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
             cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
         }
 
-        return cellIdFirstComponent+"."+cellIdSecondComponent;
+        return cellIdFirstComponent*1000+cellIdSecondComponent;
     }
 
     @Override
