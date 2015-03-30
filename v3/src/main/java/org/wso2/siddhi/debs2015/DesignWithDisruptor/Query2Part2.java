@@ -46,9 +46,9 @@ public class Query2Part2 {
 
 
         String query1 = " " +
-                "from profitStream#debs:emptyTaxi(endCellNo, medallion, dropoff_datetime, startCellNo , profit, pickup_datetime_org, iij_timestamp )  " +
+                "from profitStream#debs:emptyTaxi(endCellNo, medallion, dropoff_datetime, startCellNo , profit, pickup_datetime_org, iij_timestamp, dropoff_datetime_org )  " +
                 "select  cellNo , lastProfit as  profit, emptyTaxiCount , profitability,  " +
-                "pickup_datetime_val as pickup_datetime_org, dropoff_datetime_val as dropoff_datetime, iij_timestamp_val as iij_timestamp " +
+                "pickup_datetime_val as pickup_datetime_org, dropoff_datetime_val as dropoff_datetime_org, iij_timestamp_val as iij_timestamp " +
                 " insert into profitRawData ;";
 
 //
