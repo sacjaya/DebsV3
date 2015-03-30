@@ -83,7 +83,7 @@ public class ManagerWithFileWriteThread {
             public EventHolder newInstance() {
                 return new EventHolder();
             }
-        }, 2 ^ 18, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("data-writer-thread-%d").build()), ProducerType.MULTI, new SleepingWaitStrategy());
+        }, 2 ^ 10, Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("data-writer-thread-%d").build()), ProducerType.MULTI, new SleepingWaitStrategy());
 
         try {
 
