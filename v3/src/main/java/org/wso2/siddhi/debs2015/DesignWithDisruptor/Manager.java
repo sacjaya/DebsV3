@@ -33,6 +33,7 @@ public class Manager {
     }
 
     private void run() {
+    	System.out.println("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
         
@@ -98,9 +99,9 @@ public class Manager {
                             long timeDifference = currentTime - prevTime;
                             long timeDifferenceFromStart = currentTime - startTime;
 
-                            if (perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) {
+                            if ((perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q1: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
+                                System.out.println("q1," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }
@@ -159,9 +160,9 @@ public class Manager {
                             long timeDifference = currentTime - prevTime;
                             long timeDifferenceFromStart = currentTime - startTime;
 
-                            if (perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) {
+                            if ((perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) && (timeDifference != 0)) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q2: " + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 * 1000.0d / timeDifference) + "," + perfStats2.count);
+                                System.out.println("q2," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 * 1000.0d / timeDifference) + "," + perfStats2.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }
