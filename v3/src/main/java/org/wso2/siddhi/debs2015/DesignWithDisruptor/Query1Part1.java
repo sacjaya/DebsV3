@@ -22,7 +22,7 @@ package org.wso2.siddhi.debs2015.DesignWithDisruptor;
 import org.wso2.siddhi.core.ExecutionPlanRuntime;
 import org.wso2.siddhi.core.SiddhiManager;
 import org.wso2.siddhi.core.config.SiddhiContext;
-import org.wso2.siddhi.debs2015.extensions.countEmptyTaxi.EmptyTaxiStreamProcessor;
+import org.wso2.siddhi.debs2015.extensions.countEmptyTaxi.ImprovedEmptyTaxiStreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKStreamProcessor;
 import org.wso2.siddhi.debs2015.extensions.maxK.MaxKStreamProcessorQuery2;
 import org.wso2.siddhi.debs2015.extensions.median.BucketingBasedMedianAggregator;
@@ -44,7 +44,7 @@ public class Query1Part1 {
         extensions.put("MaxK:getMaxK", MaxKStreamProcessor.class);
         extensions.put("debs:median", BucketingBasedMedianAggregator.class);
         extensions.put("debs:extTime", CustomExternalTimeWindowProcessor.class);
-        extensions.put("debs:emptyTaxi", EmptyTaxiStreamProcessor.class);
+        extensions.put("debs:emptyTaxi", ImprovedEmptyTaxiStreamProcessor.class);
         extensions.put("MaxK:getMaxK2", MaxKStreamProcessorQuery2.class);
 
         siddhiContext.setSiddhiExtensions(extensions);

@@ -102,7 +102,7 @@ public class MaxKStreamProcessorQuery2 extends StreamProcessor {
         Object[] data =  new Object[4 * kValue+1];
 
         boolean isCurrent = (Boolean)object[0];
-        Double eventKeyValue = (Double) object[1];//This is the profit_per_taxi
+        float eventKeyValue = (Float) object[1];//This is the profit_per_taxi
         Object profitValue = object[2];
         Object emptyTaxiCountValue = object[3];
         int cellValue = (Integer)object[4];

@@ -5,12 +5,12 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
  */
 public class CustomObj{
     int cellID;
-    double profit_per_taxi;
+    float profit_per_taxi;
     Object profit;
     Object emptyTaxiCount;
 
 
-    public CustomObj(int cellID,double profit_per_taxi,Object profit,Object emptyTaxiCount){
+    public CustomObj(int cellID,float profit_per_taxi,Object profit,Object emptyTaxiCount){
         this.cellID = cellID;
         this.profit_per_taxi = profit_per_taxi;
         this.profit = profit;

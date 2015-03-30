@@ -140,7 +140,7 @@ public class Manager {
 
                         if (printOutputFlag) {
                             stringBuilder.append(data[0]);
-                            for (int i = 1; i < 41; i++) {
+                            for (int i = 1; i < 43; i++) {
                                 stringBuilder.append(",");
                                 stringBuilder.append(data[i]);
                             }

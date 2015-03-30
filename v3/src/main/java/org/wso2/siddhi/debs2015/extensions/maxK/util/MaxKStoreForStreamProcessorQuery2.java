@@ -22,15 +22,15 @@ package org.wso2.siddhi.debs2015.extensions.maxK.util;
 import java.util.*;
 
 public class MaxKStoreForStreamProcessorQuery2 {
-    private Map<Integer, Double> routeFrequencies = new HashMap<Integer, Double>(); //a reverse index of which the key is the cell ID and the value is the profitability.
-    private Map<Double, ArrayList<CustomObj>> reverseLookup = new TreeMap<Double, ArrayList<CustomObj>>(
-            new Comparator<Double>() {
-                public int compare(Double o1, Double o2) {
+    private Map<Integer, Float> routeFrequencies = new HashMap<Integer, Float>(); //a reverse index of which the key is the cell ID and the value is the profitability.
+    private Map<Float, ArrayList<CustomObj>> reverseLookup = new TreeMap<Float, ArrayList<CustomObj>>(
+            new Comparator<Float>() {
+                public int compare(Float o1, Float o2) {
                     return o2.compareTo(o1);
                 }
             }
     );    //The reverseLookup TreeMap holds the list of cells for each count.
-    private double lastReturnedLeastProfitability = 0;
+    private float lastReturnedLeastProfitability = 0;
     LinkedList<CustomObj> lastResult;
 //    private Map<Integer, TreeSet<CustomObjQuery1>> reverseLookup = new TreeMap<Integer, TreeSet<CustomObjQuery1>>(new Comparator<Integer>() {
 //
@@ -51,12 +51,12 @@ public class MaxKStoreForStreamProcessorQuery2 {
      */
     public LinkedList<CustomObj> getMaxK(CustomObj customObj, boolean isCurrent, int k) {
         int cell = customObj.getCellID();
-        Double currentProfit = (Double) customObj.getProfit_per_taxi();
+        Float currentProfit = (Float) customObj.getProfit_per_taxi();
 
-        Double previousProfit = routeFrequencies.get(customObj.getCellID());
+        Float previousProfit = routeFrequencies.get(customObj.getCellID());
 
         if (previousProfit == null) {
-            previousProfit = 0d;
+            previousProfit = 0f;
         } else {
             reverseLookup.get(previousProfit).remove(customObj);
         }
@@ -89,15 +89,15 @@ public class MaxKStoreForStreamProcessorQuery2 {
         }
 
 
-        Set<Map.Entry<Double, ArrayList<CustomObj>>> entrySet = reverseLookup.entrySet();
-        Iterator<Map.Entry<Double, ArrayList<CustomObj>>> itr = entrySet.iterator();
+        Set<Map.Entry<Float, ArrayList<CustomObj>>> entrySet = reverseLookup.entrySet();
+        Iterator<Map.Entry<Float, ArrayList<CustomObj>>> itr = entrySet.iterator();
 
         int cntr = 0;
         LinkedList<CustomObj> result = new LinkedList<CustomObj>();
 
 
         while(itr.hasNext()){
-            Map.Entry<Double, ArrayList<CustomObj>> item = itr.next();
+            Map.Entry<Float, ArrayList<CustomObj>> item = itr.next();
             lastReturnedLeastProfitability = item.getKey();
             ArrayList<CustomObj> currentCells = item.getValue();
             int currentCellSize = currentCells.size();
