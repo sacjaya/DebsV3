@@ -56,7 +56,6 @@ public class ManagerWithFileWriteThread {
     }
 
     private void run() {
-        System.out.println("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
 
@@ -441,20 +440,24 @@ public class ManagerWithFileWriteThread {
 
                     System.out.println();
                     System.out.println("***** Query 1 *****");
-                    long timeDifferenceFromStart = perfStats1.lastEventTime - startTime;
+                    long timeDifferenceFromStartQuery1 = perfStats1.lastEventTime - startTime;
 
                     System.out.println("event outputed :" + perfStats1.count);
-                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
-                    System.out.println("over all throughput (events/s) :" + ((perfStats1.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStartQuery1);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats1.count * 1000) / timeDifferenceFromStartQuery1));
                     System.out.println("over all avg latency (ms) :" + (perfStats1.totalLatency / perfStats1.count));
                     System.out.println();
                     System.out.println("***** Query 2 *****");
-                    timeDifferenceFromStart = perfStats2.lastEventTime - startTime;
+                    long timeDifferenceFromStartQuery2 = perfStats2.lastEventTime - startTime;
 
                     System.out.println("event outputed :" + perfStats2.count);
-                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
-                    System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStartQuery2);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStartQuery2));
                     System.out.println("over all avg latency (ms) :" + (perfStats2.totalLatency / perfStats2.count));
+                    
+                    long elapsedTime = (timeDifferenceFromStartQuery1 > timeDifferenceFromStartQuery2 ? timeDifferenceFromStartQuery1 : timeDifferenceFromStartQuery2);
+                    System.out.println("overall elapsed time (ms) :" + elapsedTime);
+                    System.out.println("throughput (events/s) :" + (events*1000/elapsedTime));
                     break;
                 } else {
                     lastEventTime1 = perfStats1.lastEventTime;
@@ -591,6 +594,7 @@ public class ManagerWithFileWriteThread {
             long currentTime = System.currentTimeMillis();
             System.out.println();
             System.out.println("****** Input ******");
+            System.out.println("total events in the data set : " + events);
             System.out.println("events read : " + count);
             System.out.println("time to read (ms) : " + (currentTime - startTime));
             System.out.println("read throughput (events/s) : " + (events * 1000 / (currentTime - startTime)));
