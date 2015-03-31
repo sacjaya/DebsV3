@@ -33,13 +33,13 @@ public class Manager {
     }
 
     private void run() {
-    	System.out.println("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
+        System.out.println("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
-        
-    	dataSetSize = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
+
+        dataSetSize = Long.parseLong(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset.size"));
         final String logDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
-    	
+
         Query2Part1 query2Part1 = new Query2Part1();
         ExecutionPlanRuntime executionPlanRuntimeQ2p1 = query2Part1.addExecutionPlan();
         InputHandler taxiTripsInputHandler = executionPlanRuntimeQ2p1.getInputHandler("taxi_trips");
@@ -66,9 +66,14 @@ public class Manager {
                 FileWriter fw = new FileWriter(new File(logDir + "/output-1-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 StringBuilder stringBuilder = new StringBuilder();
+                long startTimeOutput;
 
                 @Override
                 public void receive(Event[] events) {
+
+                    if (startTimeOutput == 0) {
+                        startTimeOutput = System.currentTimeMillis();
+                    }
 
                     for (Event evt : events) {
 
@@ -97,7 +102,7 @@ public class Manager {
 
                             latencyWithinEventCountWindow += latency;
                             long timeDifference = currentTime - prevTime;
-                            long timeDifferenceFromStart = currentTime - startTime;
+                            long timeDifferenceFromStart = currentTime - startTimeOutput;
 
                             if ((perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
@@ -131,10 +136,14 @@ public class Manager {
                 FileWriter fw = new FileWriter(new File(logDir + "/output-2-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 StringBuilder stringBuilder = new StringBuilder();
+                long startTimeOutput;
 
                 @Override
                 public void receive(Event[] events) {
 
+                    if (startTimeOutput == 0) {
+                        startTimeOutput = System.currentTimeMillis();
+                    }
                     for (Event evt : events) {
                         Object[] data = evt.getData();
 
@@ -158,7 +167,7 @@ public class Manager {
 
                             latencyWithinEventCountWindow += latency;
                             long timeDifference = currentTime - prevTime;
-                            long timeDifferenceFromStart = currentTime - startTime;
+                            long timeDifferenceFromStart = currentTime - startTimeOutput;
 
                             if ((perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) && (timeDifference != 0)) {
                                 //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
@@ -228,20 +237,24 @@ public class Manager {
 
                     System.out.println();
                     System.out.println("***** Query 1 *****");
-                    long timeDifferenceFromStart = perfStats1.lastEventTime - startTime;
+                    long timeDifferenceFromStartQuery1 = perfStats1.lastEventTime - startTime;
 
                     System.out.println("event outputed :" + perfStats1.count);
-                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
-                    System.out.println("over all throughput (events/s) :" + ((perfStats1.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStartQuery1);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats1.count * 1000) / timeDifferenceFromStartQuery1));
                     System.out.println("over all avg latency (ms) :" + (perfStats1.totalLatency / perfStats1.count));
                     System.out.println();
                     System.out.println("***** Query 2 *****");
-                    timeDifferenceFromStart = perfStats2.lastEventTime - startTime;
+                    long timeDifferenceFromStartQuery2 = perfStats2.lastEventTime - startTime;
 
                     System.out.println("event outputed :" + perfStats2.count);
-                    System.out.println("time to process (ms) :" + timeDifferenceFromStart);
-                    System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStart));
+                    System.out.println("time to process (ms) :" + timeDifferenceFromStartQuery2);
+                    System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStartQuery2));
                     System.out.println("over all avg latency (ms) :" + (perfStats2.totalLatency / perfStats2.count));
+
+                    long elapsedTime = (timeDifferenceFromStartQuery1 > timeDifferenceFromStartQuery2 ? timeDifferenceFromStartQuery1 : timeDifferenceFromStartQuery2);
+                    System.out.println("overall elapsed time (ms) :" + elapsedTime);
+                    System.out.println("throughput (events/s) :" + (dataSetSize * 1000 / elapsedTime));
                     break;
                 } else {
                     lastEventTime1 = perfStats1.lastEventTime;
@@ -252,7 +265,7 @@ public class Manager {
                 e.printStackTrace();
             }
         }
-        
+
         executionPlanRuntimeQ2p1.shutdown();
         executionPlanRuntimeQ2p3.shutdown();
         executionPlanRuntimeQ2p2.shutdown();
@@ -373,9 +386,10 @@ public class Manager {
             long currentTime = System.currentTimeMillis();
             System.out.println();
             System.out.println("****** Input ******");
-            System.out.println("events read : " + count);
+            System.out.println("total events in the data set : " + dataSetSize);
+            System.out.println("events sent : " + count);
             System.out.println("time to read (ms) : " + (currentTime - startTime));
-            System.out.println("read throughput (events/s) : " + (events * 1000 / (currentTime - startTime)));
+            System.out.println("read throughput (events/s) : " + (dataSetSize * 1000 / (currentTime - startTime)));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Throwable e) {

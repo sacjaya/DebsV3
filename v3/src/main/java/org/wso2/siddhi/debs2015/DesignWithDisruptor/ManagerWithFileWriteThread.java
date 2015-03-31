@@ -454,10 +454,10 @@ public class ManagerWithFileWriteThread {
                     System.out.println("time to process (ms) :" + timeDifferenceFromStartQuery2);
                     System.out.println("over all throughput (events/s) :" + ((perfStats2.count * 1000) / timeDifferenceFromStartQuery2));
                     System.out.println("over all avg latency (ms) :" + (perfStats2.totalLatency / perfStats2.count));
-                    
+
                     long elapsedTime = (timeDifferenceFromStartQuery1 > timeDifferenceFromStartQuery2 ? timeDifferenceFromStartQuery1 : timeDifferenceFromStartQuery2);
                     System.out.println("overall elapsed time (ms) :" + elapsedTime);
-                    System.out.println("throughput (events/s) :" + (events*1000/elapsedTime));
+                    System.out.println("throughput (events/s) :" + (dataSetSize * 1000 / elapsedTime));
                     break;
                 } else {
                     lastEventTime1 = perfStats1.lastEventTime;
@@ -594,10 +594,11 @@ public class ManagerWithFileWriteThread {
             long currentTime = System.currentTimeMillis();
             System.out.println();
             System.out.println("****** Input ******");
-            System.out.println("total events in the data set : " + events);
-            System.out.println("events read : " + count);
+            System.out.println("total events in the data set : " + dataSetSize);
+            System.out.println("events sent : " + count);
             System.out.println("time to read (ms) : " + (currentTime - startTime));
-            System.out.println("read throughput (events/s) : " + (events * 1000 / (currentTime - startTime)));
+            System.out.println("read throughput (events/s) : " + (dataSetSize * 1000 / (currentTime - startTime)));
+
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         } catch (Throwable e) {
