@@ -33,7 +33,6 @@ public class Manager {
     }
 
     private void run() {
-        System.out.println("time from start(ms),time from start(s), overall latency (ms/event), latency in this time window (ms/event), overall throughput(events/s), throughput in this time window (events/s), total number of events received till this time (events)\r\n");
         final boolean performanceLoggingFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
         final boolean printOutputFlag = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
 
@@ -75,26 +74,35 @@ public class Manager {
                         startTimeOutput = System.currentTimeMillis();
                     }
 
+//                    long eventOriginationTime = (Long) data[22];
+//                    long currentTime = System.currentTimeMillis();
+//                    long latency = currentTime - eventOriginationTime;
+                    
+                    long eventOriginationTime = 0l;
+                    long currentTime = 0l;
+                    long latency = 0l;
+                    
                     for (Event evt : events) {
 
                         Object[] data = evt.getData();
-
+                        
                         if (printOutputFlag) {
                             stringBuilder.append(data[0]);
                             for (int i = 1; i < 22; i++) {
                                 stringBuilder.append(",");
                                 stringBuilder.append(data[i]);
                             }
+                            stringBuilder.append(",");
+                            eventOriginationTime = (Long) data[22];
+                            currentTime = System.currentTimeMillis();
+                            latency = currentTime - eventOriginationTime;
+                            stringBuilder.append(latency);
                             stringBuilder.append("\r\n");
                         }
 
 
                         //If the performance logging flag is set, we need to print the performance measurements.
                         if (performanceLoggingFlag) {
-
-                            long eventOriginationTime = (Long) data[22];
-                            long currentTime = System.currentTimeMillis();
-                            long latency = currentTime - eventOriginationTime;
 
                             perfStats1.count++;
                             perfStats1.totalLatency += latency;
@@ -105,8 +113,6 @@ public class Manager {
                             long timeDifferenceFromStart = currentTime - startTimeOutput;
 
                             if ((perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q1," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }
@@ -144,23 +150,35 @@ public class Manager {
                     if (startTimeOutput == 0) {
                         startTimeOutput = System.currentTimeMillis();
                     }
+                    
+//                    long currentTime = System.currentTimeMillis();
+//                    long eventOriginationTime = (Long) data[42];
+//                    long latency = currentTime - eventOriginationTime;
+                    
+                    long currentTime = 0l;
+                    long eventOriginationTime = 0l;
+                    long latency = 0l;
+                    
                     for (Event evt : events) {
                         Object[] data = evt.getData();
-
+                        
                         if (printOutputFlag) {
                             stringBuilder.append(data[0]);
-                            for (int i = 1; i < 43; i++) {
+
+                            for (int i = 1; i < 42; i++) {
                                 stringBuilder.append(",");
                                 stringBuilder.append(data[i]);
                             }
+                            
+                            stringBuilder.append(",");
+                            eventOriginationTime = (Long) data[42];
+                            currentTime = System.currentTimeMillis();
+                            latency = currentTime - eventOriginationTime;
+                            stringBuilder.append(latency);
                             stringBuilder.append("\r\n");
                         }
 
                         if (performanceLoggingFlag) {
-                            long currentTime = System.currentTimeMillis();
-                            long eventOriginationTime = (Long) data[42];
-                            long latency = currentTime - eventOriginationTime;
-
                             perfStats2.count++;
                             perfStats2.totalLatency += latency;
                             perfStats2.lastEventTime = currentTime;
@@ -170,8 +188,6 @@ public class Manager {
                             long timeDifferenceFromStart = currentTime - startTimeOutput;
 
                             if ((perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) && (timeDifference != 0)) {
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-                                System.out.println("q2," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2) + "," + Math.round(perfStats2.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 * 1000.0d / timeDifference) + "," + perfStats2.count);
                                 prevTime = currentTime;
                                 latencyWithinEventCountWindow = 0;
                             }

@@ -72,8 +72,8 @@ public class MaxKStoreForStreamProcessorQuery2 {
             ArrayList<CustomObj> cellsList = reverseLookup.get(currentProfit);
 
             if (cellsList != null) {
-                if (cellsList.size() == 10)
-                    cellsList.remove(0);
+        //        if (cellsList.size() == 10)
+       //             cellsList.remove(0);
                 cellsList.add(customObj);
             } else {
                 cellsList = new ArrayList<CustomObj>();

@@ -20,7 +20,8 @@ public class Config {
 		String value = null;
 		
 		try {
-			inStream = new FileInputStream("/home/miyurud/workspace/debsv3/debs2015.properties");
+			//inStream = new FileInputStream("/home/miyurud/workspace/debsv3/debs2015.properties");
+			inStream = new FileInputStream("debs2015.properties");
 			props.load(inStream);
 			value = props.getProperty(key);
 		} catch (FileNotFoundException e) {
