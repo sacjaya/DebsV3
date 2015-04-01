@@ -70,7 +70,7 @@ public class ManagerWithFileWriteThread_Handler {
             public DebsEvent newInstance() {
                 return new DebsEvent();
             }
-        }, 2048, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("data-reader-thread-%d").build()), ProducerType.SINGLE, new SleepingWaitStrategy());
+        }, 1024, Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("data-reader-thread-%d").build()), ProducerType.SINGLE, new SleepingWaitStrategy());
 
         //******************Handlers**************************************//
 

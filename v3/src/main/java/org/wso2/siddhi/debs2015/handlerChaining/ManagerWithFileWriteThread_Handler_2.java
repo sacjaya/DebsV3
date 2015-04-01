@@ -78,11 +78,12 @@ public class ManagerWithFileWriteThread_Handler_2 {
         Q1TopKHandler q1TopKHandler = new Q1TopKHandler();
         Q2ProfitHandler q2ProfitabilityHandler = new Q2ProfitHandler();
         Q2MaxKHandler q2TopKHandler = new Q2MaxKHandler();
-
+        Q2EmptyTaxiHandler emptyTaxiHandler = new Q2EmptyTaxiHandler();
 
         dataReadDisruptor.handleEventsWith(conversionHandler);
         dataReadDisruptor.after(conversionHandler).handleEventsWith(q1TopKHandler,q2ProfitabilityHandler);
-        dataReadDisruptor.after(q2ProfitabilityHandler).handleEventsWith(q2TopKHandler);
+        dataReadDisruptor.after(q2ProfitabilityHandler).handleEventsWith(emptyTaxiHandler);
+        dataReadDisruptor.after(emptyTaxiHandler).handleEventsWith(q2TopKHandler);
         dataReadBuffer = dataReadDisruptor.start();
 
 
@@ -375,17 +376,51 @@ public class ManagerWithFileWriteThread_Handler_2 {
             }
 
 
-            for (DebsEvent event : windowOutputList) {
-                emptyTaxiProcessor.process(event);
-                position++;
-
-            }
+//            for (DebsEvent event : windowOutputList) {
+//                emptyTaxiProcessor.process(event);
+//                position++;
+//
+//            }
 
             debsEvent.setListAfterFirstWindow(windowOutputList);
 
 
         }
     }
+
+    private class Q2EmptyTaxiHandler implements EventHandler<DebsEvent> {
+        int position = 0;
+        EmptyTaxiProcessor emptyTaxiProcessor = new EmptyTaxiProcessor();
+//        ExternalTimeWindowProcessor externalTimeWindowProcessor = new ExternalTimeWindowProcessor(15 * 60 * 1000);
+//        GroupByExecutor groupByExecutor = new GroupByExecutor();
+
+        /* "from profitStream#debs:emptyTaxi(endCellNo, medallion, dropoff_datetime, startCellNo , profit, pickup_datetime_org, iij_timestamp, dropoff_datetime_org )  " +
+                "select  cellNo , lastProfit as  profit, emptyTaxiCount , profitability,  " +
+                "pickup_datetime_val as pickup_datetime_org, dropoff_datetime_val as dropoff_datetime_org, iij_timestamp_val as iij_timestamp " +
+                " insert into profitRawData ;"
+                 */
+
+        @Override
+        public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
+//            List<DebsEvent> windowOutputList = externalTimeWindowProcessor.process(debsEvent);
+//            for (DebsEvent event : windowOutputList) {
+//                float profit = groupByExecutor.execute(event.getStartCellNo(), event.getFare_plus_ip_amount(), event.isCurrent());
+//                event.setProfit(profit);
+//            }
+//
+
+            for (DebsEvent event : debsEvent.getListAfterFirstWindow()) {
+                emptyTaxiProcessor.process(event);
+                position++;
+
+            }
+
+//            debsEvent.setListAfterFirstWindow(windowOutputList);
+
+
+        }
+    }
+
 
     private class Q2MaxKHandler implements EventHandler<DebsEvent> {
         MaxKQ2Processor maxKQ2Processor = new MaxKQ2Processor();
