@@ -24,7 +24,7 @@ public class ImprovedEmptyTaxiStreamProcessor extends StreamProcessor {
     private static final Logger LOGGER = Logger.getLogger(ImprovedEmptyTaxiStreamProcessor.class);
     private boolean debugEnabled = false;
 
-    private Map<String, Object[]> medallionMap = new HashMap<String, Object[]>();
+    private Map<Integer, Object[]> medallionMap = new HashMap<Integer, Object[]>();
 
     private Map<Integer, CountProfitCustomObj> cellDataMap = new HashMap<Integer, CountProfitCustomObj>();       //key:Cell, values: (profit , count )
 
@@ -123,7 +123,7 @@ public class ImprovedEmptyTaxiStreamProcessor extends StreamProcessor {
 
 
         //remove previous trip of the same taxi
-        Object[] previousDropoff = medallionMap.put((String) inputData[1], inputData);   // previousDropOff has endCellNo, medallion, dropoff_datetime
+        Object[] previousDropoff = medallionMap.put((Integer) inputData[1], inputData);   // previousDropOff has endCellNo, medallion, dropoff_datetime
         if(previousDropoff != null){
             int cell = (Integer)previousDropoff[0];
             cellDataMap.get(cell).count--;
@@ -137,7 +137,7 @@ public class ImprovedEmptyTaxiStreamProcessor extends StreamProcessor {
             Object[] trip = taxiInfoWindow.peekFirst();        //endCellNo, medallion, dropoff_datetime, startCellNo , profit, pickup_datetime, iij_timestamp
             if(trip != null && currentTimeStamp -(Long)trip[2] >= 1800000){
                 taxiInfoWindow.removeFirst();
-                String medallionKey = (String) trip[1];
+                Integer medallionKey =  (Integer)trip[1];
                 Object[] medallionMapEntry = medallionMap.get(medallionKey);
 
                 if(medallionMapEntry != null && medallionMapEntry[2] ==trip[2] ){

@@ -30,7 +30,7 @@ public class Query2Part2 {
         //7.5, 284.319, 285.322, 1357287720000, 1357287840000, 8E3E1ED0244393813CB20C8DDE4001BA, 2013-01-04 08:22:00, 2013-01-04 08:24:00, 1427383481957
 
 
-        String taxiTripStream = " define stream profitStream ( profit float, startCellNo int, endCellNo int , pickup_datetime long ,  dropoff_datetime long ,  medallion string ," +
+        String taxiTripStream = " define stream profitStream ( profit float, startCellNo int, endCellNo int , pickup_datetime long ,  dropoff_datetime long ,  medallion int ," +
                 "pickup_datetime_org string, dropoff_datetime_org string , iij_timestamp long ); ";
 
 
