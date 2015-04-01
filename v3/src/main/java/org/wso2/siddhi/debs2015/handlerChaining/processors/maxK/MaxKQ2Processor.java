@@ -53,7 +53,7 @@ public class MaxKQ2Processor {
         currentTopK = maxKStore.getMaxK(profitObj, isCurrent, kValue);
 
 
-        if (currentTopK == null) {
+        if (currentTopK == null || currentTopK.size()<1) {
             return null;
         } else {
 

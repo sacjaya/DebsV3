@@ -5,10 +5,11 @@ import org.wso2.siddhi.debs2015.handlerChaining.DebsEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class ExternalTimeWindowCustomProcessor {
     private long timeToKeep;
-    ArrayList<DebsEvent> expiredEventQueue = new ArrayList<DebsEvent>();
+    LinkedBlockingQueue<DebsEvent> expiredEventQueue = new LinkedBlockingQueue<DebsEvent>();
 
     public ExternalTimeWindowCustomProcessor(int timeToKeep) {
         this.timeToKeep = timeToKeep;
