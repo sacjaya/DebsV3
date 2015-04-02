@@ -15,27 +15,26 @@ public class CellIdProcessor  {
 
 
     public int execute(float inputLongitude, float inputLatitude) {
-        //--------------------------------------------------          The following is for longitude -------------------------------------
-
-        short cellIdFirstComponent;
+    	//--------------------------------------------------          The following is for longitude -------------------------------------
+    	short cellIdFirstComponent;
 
         if(westMostLongitude==inputLongitude){
-            cellIdFirstComponent= gridResolution;
+            cellIdFirstComponent= 1;
         } else {
-            cellIdFirstComponent = (short) ((((eastMostLongitude - inputLongitude) / longitudeDifference) * gridResolution) + 1);
+            cellIdFirstComponent = (short) Math.round((((inputLongitude- westMostLongitude) / longitudeDifference) * gridResolution));
         }
 
         //--------------------------------------------------          The following is for latitude -------------------------------------
 
         short cellIdSecondComponent;
-
-        if(southMostLatitude==inputLatitude){
-            cellIdSecondComponent= gridResolution;
+        
+        if(northMostLatitude == inputLatitude) {
+            cellIdSecondComponent = 1;
         } else {
-            cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
+            cellIdSecondComponent = (short) Math.round((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution));
         }
 
-        return cellIdFirstComponent*1000+cellIdSecondComponent;
+        return  (cellIdFirstComponent*1000+cellIdSecondComponent);
     }
 
 

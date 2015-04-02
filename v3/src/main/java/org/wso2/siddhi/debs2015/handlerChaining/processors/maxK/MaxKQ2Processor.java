@@ -71,7 +71,7 @@ public class MaxKQ2Processor {
                 data[position++] = (cellIntValue / 1000) + "." + (cellIntValue % 1000);//profitable_cell_id_
                 data[position++] = customObj.getEmptyTaxiCount();//empty_taxies_in_cell_id_
                 data[position++] = customObj.getProfit();//median_profit_in_cell_id_
-                data[position++] = customObj.getProfit_per_taxi();//profitability_of_cell_
+                data[position++] = customObj.getProfit_per_taxi();//profitability_of_cell_id
 
             }
 

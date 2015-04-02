@@ -25,6 +25,8 @@ public class Manager {
     private static PerfStats perfStats2 = new PerfStats();
     private static long lastEventTime1 = 0;
     private static long lastEventTime2 = 0;
+    private static String COMMA = ",";
+    private static String CARRIAGERETURN_NEWLINE = "\r\n";
 
     public static void main(String[] args) {
         Manager manager = new Manager();
@@ -83,15 +85,15 @@ public class Manager {
                         if (printOutputFlag) {
                             stringBuilder.append(data[0]);
                             for (int i = 1; i < 22; i++) {
-                                stringBuilder.append(",");
+                                stringBuilder.append(COMMA);
                                 stringBuilder.append(data[i]);
                             }
-                            stringBuilder.append(",");
+                            stringBuilder.append(COMMA);
                             eventOriginationTime = (Long) data[22];
                             currentTime = System.currentTimeMillis();
                             latency = currentTime - eventOriginationTime;
                             stringBuilder.append(latency);
-                            stringBuilder.append("\r\n");
+                            stringBuilder.append(CARRIAGERETURN_NEWLINE);
                         }
 
                         //If the performance logging flag is set, we need to print the performance measurements.
@@ -139,16 +141,16 @@ public class Manager {
                             stringBuilder.append(data[0]);
 
                             for (int i = 1; i < 42; i++) {
-                                stringBuilder.append(",");
+                                stringBuilder.append(COMMA);
                                 stringBuilder.append(data[i]);
                             }
                             
-                            stringBuilder.append(",");
+                            stringBuilder.append(COMMA);
                             eventOriginationTime = (Long) data[42];
                             currentTime = System.currentTimeMillis();
                             latency = currentTime - eventOriginationTime;
                             stringBuilder.append(latency);
-                            stringBuilder.append("\r\n");
+                            stringBuilder.append(CARRIAGERETURN_NEWLINE);
                         }
 
                         if (performanceLoggingFlag) {
@@ -198,7 +200,6 @@ public class Manager {
 
             }
         });
-
 
         executionPlanRuntimeQ1p1.start();
         executionPlanRuntimeQ2p3.start();
@@ -301,7 +302,6 @@ public class Manager {
                         continue;
                     }
 
-
                     float dropoffLongitude = Float.parseFloat(dropoff_longitude);
 
                     if (-74.916578f > dropoffLongitude || -73.120778f < dropoffLongitude) {
@@ -373,4 +373,3 @@ public class Manager {
         System.out.println("Now exiting from data loader");
     }
 }
-

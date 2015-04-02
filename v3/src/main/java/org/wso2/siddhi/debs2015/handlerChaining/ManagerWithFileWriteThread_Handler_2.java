@@ -22,6 +22,7 @@ import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.SleepingWaitStrategy;
 import com.lmax.disruptor.dsl.Disruptor;
 import com.lmax.disruptor.dsl.ProducerType;
+
 import org.wso2.siddhi.debs2015.handlerChaining.processors.*;
 import org.wso2.siddhi.debs2015.handlerChaining.processors.maxK.MaxKQ1Processor;
 import org.wso2.siddhi.debs2015.handlerChaining.processors.maxK.MaxKQ2Processor;
@@ -30,8 +31,12 @@ import org.wso2.siddhi.debs2015.util.Config;
 import org.wso2.siddhi.debs2015.util.Constants;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +56,9 @@ public class ManagerWithFileWriteThread_Handler_2 {
     private RingBuffer dataReadBuffer;
     final boolean performanceLoggingFlag = true;// Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.perflogging").equals("true") ? true : false;
     final boolean printOutputFlag = true;// Config.getConfigurationInfo("org.wso2.siddhi.debs2015.flags.printoutput").equals("true") ? true : false;
-    final String logDir = "/wso2dev";//Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
+    final String logDir = Config.getConfigurationInfo("org.wso2.siddhi.debs2015.experiment.logdir");
+    private static String COMMA = ",";
+    private static String CARRIAGERETURN_NEWLINE = "\r\n";
 
     public static void main(String[] args) {
         ManagerWithFileWriteThread_Handler_2 manager = new ManagerWithFileWriteThread_Handler_2();
@@ -83,7 +90,6 @@ public class ManagerWithFileWriteThread_Handler_2 {
         dataReadDisruptor.after(q2ProfitabilityHandler).handleEventsWith(emptyTaxiHandler);
         dataReadDisruptor.after(emptyTaxiHandler).handleEventsWith(q2TopKHandler);
         dataReadBuffer = dataReadDisruptor.start();
-
 
         loadData(Config.getConfigurationInfo("org.wso2.siddhi.debs2015.dataset"));
 
@@ -165,6 +171,9 @@ public class ManagerWithFileWriteThread_Handler_2 {
                 //Although there are other attributes in this line after tip_amount (e.g., tolls_amount
                 //and total_amount) we do not use those.
                 
+                //We are taking the time at this point because we have just finished reading the event data.
+                //The time should include the time spent on filtering activities as well. Therefore, its
+                //better to take the time stamp at this point of the code.
                 long currentTIme = System.currentTimeMillis();
                 float pickupLongitude = Float.parseFloat(pickup_longitude);
                 float pickupLatitude;
@@ -183,7 +192,6 @@ public class ManagerWithFileWriteThread_Handler_2 {
                         continue;
                     }
 
-
                     dropoffLongitude = Float.parseFloat(dropoff_longitude);
 
                     if (-74.916578f > dropoffLongitude || -73.120778f < dropoffLongitude) {
@@ -198,7 +206,7 @@ public class ManagerWithFileWriteThread_Handler_2 {
                         continue;
                     }
                 } catch (NumberFormatException e) {
-                    //We do nothing here. This is due having odd values for lat, lon values.
+                    //We do nothing here. This is due to having odd values for lat, lon values.
                     line = br.readLine();
                     continue;
                 }
@@ -257,7 +265,6 @@ public class ManagerWithFileWriteThread_Handler_2 {
         CellIdProcessor cellIdProcessor = new CellIdProcessor();
         TimeStampProcessor timeStampProcessor = new TimeStampProcessor();
 
-        @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
             debsEvent.setStartCellNo(cellIdProcessor.execute(debsEvent.getPickup_longitude(), debsEvent.getPickup_latitude()));
             debsEvent.setEndCellNo(cellIdProcessor.execute(debsEvent.getDropoff_longitude(), debsEvent.getDropoff_latitude()));
@@ -269,26 +276,61 @@ public class ManagerWithFileWriteThread_Handler_2 {
     private class Q1TopKHandler implements EventHandler<DebsEvent> {
         ExternalTimeWindowProcessor externalTimeWindowProcessor = new ExternalTimeWindowProcessor(30 * 60 * 1000);
         MaxKQ1Processor maxKQ1Processor = new MaxKQ1Processor();
-        public long prevTime1 = System.currentTimeMillis();
-        public long latencyWithinEventCountWindow1;
-
-        @Override
+        StringBuilder stringBuilder = new StringBuilder();
+        FileWriter fw = null;
+        BufferedWriter bw = null;
+        
+        public Q1TopKHandler(){
+        	super();
+        	try {
+	            fw = new FileWriter(new File(logDir + "/output-1-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
+	            bw = new BufferedWriter(fw);
+            } catch (IOException e) {
+	            e.printStackTrace();
+            }
+        }
+        
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
             List<DebsEvent> afterThirtyMinWindow =externalTimeWindowProcessor.process(debsEvent);
-
-
+            
             for (DebsEvent eve : afterThirtyMinWindow) {
                 maxKQ1Processor.process(eve);
+                
                 long currentTime = System.currentTimeMillis();
-                if (eve.getTopK() != null) {
+                Object[] topKRoutes = eve.getTopK();
+                if (topKRoutes != null) {
                     if (performanceLoggingFlag) {
                         long eventOriginationTime = debsEvent.getIij_timestamp();
                         long latency = currentTime - eventOriginationTime;
 
+                        stringBuilder.append(eve.pickup_datetime_org);
+                        stringBuilder.append(COMMA);
+                        stringBuilder.append(eve.dropoff_datetime_org);
+                        stringBuilder.append(COMMA);
+                        
+                        for(Object item:topKRoutes){
+                            stringBuilder.append(item);
+                            stringBuilder.append(COMMA);
+                        }                       
+                        
+                        stringBuilder.append(latency);
+                        stringBuilder.append(CARRIAGERETURN_NEWLINE);
+                        
                         perfStats1.count++;
                         perfStats1.totalLatency += latency;
                         perfStats1.lastEventTime = currentTime;
                     }
+                }
+            }
+            
+            if (printOutputFlag) {
+                try {
+                    bw.write(stringBuilder.toString());
+                    bw.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    stringBuilder.setLength(0);
                 }
             }
         }
@@ -312,7 +354,6 @@ public class ManagerWithFileWriteThread_Handler_2 {
     private class Q2EmptyTaxiHandler implements EventHandler<DebsEvent> {
         EmptyTaxiProcessor emptyTaxiProcessor = new EmptyTaxiProcessor();
 
-        @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
             for (DebsEvent event : debsEvent.getListAfterFirstWindow()) {
                 emptyTaxiProcessor.process(event);
@@ -322,7 +363,19 @@ public class ManagerWithFileWriteThread_Handler_2 {
 
     private class Q2MaxKHandler implements EventHandler<DebsEvent> {
         MaxKQ2Processor maxKQ2Processor = new MaxKQ2Processor();
-
+        StringBuilder stringBuilder = new StringBuilder();
+        FileWriter fw = null;
+        BufferedWriter bw = null;
+        
+        public Q2MaxKHandler(){
+        	super();
+        	try {
+	            fw = new FileWriter(new File(logDir + "/output-2-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
+	            bw = new BufferedWriter(fw);
+            } catch (IOException e) {
+	            e.printStackTrace();
+            }
+        }
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
             List<DebsEvent> after = debsEvent.getListAfterFirstWindow();
             for (DebsEvent eve : after) {
@@ -335,11 +388,35 @@ public class ManagerWithFileWriteThread_Handler_2 {
                             long eventOriginationTime = debsEvent.getIij_timestamp();
                             long latency = currentTime - eventOriginationTime;
 
+                            stringBuilder.append(debsEvent.pickup_datetime_org);
+                            stringBuilder.append(COMMA);
+                            stringBuilder.append(eve.dropoff_datetime_org);
+                            stringBuilder.append(COMMA);
+                            
+                            for(Object item:maxKOutPut){
+                                stringBuilder.append(item);
+                                stringBuilder.append(COMMA);
+                            }
+                            
+                            stringBuilder.append(latency);
+                            stringBuilder.append(CARRIAGERETURN_NEWLINE);
+                            
                             perfStats2.count++;
                             perfStats2.totalLatency += latency;
                             perfStats2.lastEventTime = currentTime;
                         }
                     }
+                }
+            }
+            
+            if (printOutputFlag) {
+                try {
+                    bw.write(stringBuilder.toString());
+                    bw.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    stringBuilder.setLength(0);
                 }
             }
         }
