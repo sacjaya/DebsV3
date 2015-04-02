@@ -120,14 +120,12 @@ public class ManagerWithFileWriteThread_Handler {
         }
     }
 
-
     public void loadData(String fileName) {
         Splitter splitter = Splitter.on(',');
         BufferedReader br;
         int count = 0;
         HashMap<String, Integer> medallionMap = new HashMap<String, Integer>();
         int medallionCount = 1;
-
 
         try {
             br = new BufferedReader(new FileReader(fileName), 10 * 1024 * 1024);
@@ -149,19 +147,19 @@ public class ManagerWithFileWriteThread_Handler {
                     medallionIntVal = medallionCount;
                     medallionMap.put(medallion, medallionCount++);
                 }
-                String hack_license = dataStrIterator.next();
+                dataStrIterator.next();//hack_license
                 String pickup_datetime = dataStrIterator.next();
                 String dropoff_datetime = dataStrIterator.next();
-                String trip_time_in_secs = dataStrIterator.next();
-                String trip_distance = dataStrIterator.next();
+                dataStrIterator.next();//trip_time_in_secs
+                dataStrIterator.next();//trip_distance
                 String pickup_longitude = dataStrIterator.next();
                 String pickup_latitude = dataStrIterator.next();
                 String dropoff_longitude = dataStrIterator.next();
                 String dropoff_latitude = dataStrIterator.next();
-                dataStrIterator.next();
+                dataStrIterator.next();//payment_type
                 String fare_amount = dataStrIterator.next();
-                dataStrIterator.next();
-                dataStrIterator.next();
+                dataStrIterator.next();//surcharge
+                dataStrIterator.next();//mta_tax
                 String tip_amount = dataStrIterator.next();
 
                 long currentTIme = System.currentTimeMillis();
@@ -214,29 +212,12 @@ public class ManagerWithFileWriteThread_Handler {
                     totalAmount = fareAmount + tipAmount;
                 }
 
-                short tripTimeInSecs;
-                float tripDistance;
-                try {
-                    tripTimeInSecs = Short.parseShort(trip_time_in_secs);
-                    tripDistance = Float.parseFloat(trip_distance);
-
-                } catch (NumberFormatException e) {
-                    //If we find a discrepancy in converting data, then we have to discard that
-                    //particular event.
-                    line = br.readLine();
-                    continue;
-                }
-
-
                 long sequenceNo = dataReadBuffer.next();
                 try {
                     DebsEvent eventHolder = dataReadDisruptor.get(sequenceNo);
                     eventHolder.setMedallion(medallionIntVal);
-                    eventHolder.setHack_license(hack_license);
                     eventHolder.setPickup_datetime_org(pickup_datetime);
                     eventHolder.setDropoff_datetime_org(dropoff_datetime);
-                    eventHolder.setTrip_time_in_secs(tripTimeInSecs);
-                    eventHolder.setTrip_distance(tripDistance);
                     eventHolder.setPickup_longitude(pickupLongitude);
                     eventHolder.setPickup_latitude(pickupLatitude);
                     eventHolder.setDropoff_longitude(dropoffLongitude);
@@ -248,9 +229,8 @@ public class ManagerWithFileWriteThread_Handler {
                     count++;
                     dataReadBuffer.publish(sequenceNo);
                 }
-//                inputHandler.send(eventData);
+                
                 line = br.readLine();
-
             }
 
             long currentTime = System.currentTimeMillis();
@@ -271,25 +251,11 @@ public class ManagerWithFileWriteThread_Handler {
         }
     }
 
-
     private class MedianHandler implements EventHandler<DebsEvent> {
         CellIdProcessor cellIdProcessor = new CellIdProcessor();
         TimeStampProcessor timeStampProcessor = new TimeStampProcessor();
         ExternalTimeWindowProcessor externalTimeWindowProcessor = new ExternalTimeWindowProcessor(15 * 60 * 1000);
         GroupByExecutor groupByExecutor = new GroupByExecutor();
-        /* @info(name = 'query1') " +
-                "from taxi_trips " +
-                "select debs:cellId(pickup_longitude,pickup_latitude) as startCellNo, debs:cellId(dropoff_longitude,dropoff_latitude) as endCellNo , " +
-                "debs:getTimestamp(pickup_datetime_org) as pickup_datetime , debs:getTimestamp(dropoff_datetime_org) as dropoff_datetime, fare_plus_ip_amount," +
-                " medallion, pickup_datetime_org, dropoff_datetime_org,  iij_timestamp " +
-                " insert into cell_based_taxi_trips */
-
-        /* "@info(name = 'query2') " +
-                "from cell_based_taxi_trips#window.externalTime(dropoff_datetime , 15 min)  " +
-                "select debs:median(fare_plus_ip_amount) as profit, startCellNo, endCellNo, pickup_datetime, dropoff_datetime, " +
-                "medallion, pickup_datetime_org, dropoff_datetime_org,  iij_timestamp  " +
-                "group by startCellNo " +
-                "insert all events  into profitStream ;";*/
 
         @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
@@ -304,26 +270,12 @@ public class ManagerWithFileWriteThread_Handler {
                 event.setProfit(profit);
             }
             debsEvent.setListAfterFirstWindow(windowOutputList);
-
         }
     }
 
     private class Q1TopKHandler implements EventHandler<DebsEvent> {
         ExternalTimeWindowCustomProcessor externalTimeWindowCustomProcessor = new ExternalTimeWindowCustomProcessor(15 * 60 * 1000);
         MaxKQ1Processor maxKQ1Processor = new MaxKQ1Processor();
-        public long prevTime1 = System.currentTimeMillis();
-        public long latencyWithinEventCountWindow1;
-
-        /*"@info(name = 'query1') " +
-                "from profitStream#window.debs:extTime(dropoff_datetime , 15 min) " +
-                "select startCellNo , endCellNo,  pickup_datetime_org, dropoff_datetime_org, iij_timestamp " +
-                "insert all events  into countStream ;"; */
-
-        /* ""from countStream#MaxK:getMaxK(startCellNo, endCellNo, 10, iij_timestamp) " +
-                "select pickup_datetime_org, dropoff_datetime_org, startCell1 ,endCell1, startCell2, endCell2, " +
-                "startCell3 ,endCell3, startCell4, endCell4, startCell5, endCell5, startCell6, endCell6," +
-                "startCell7 ,endCell7 , startCell8, endCell8, startCell9, endCell9, startCell10, endCell10, iij_timestamp " +
-                "insert into q1outputStream"; */
 
         @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
@@ -342,68 +294,28 @@ public class ManagerWithFileWriteThread_Handler {
                             perfStats1.count++;
                             perfStats1.totalLatency += latency;
                             perfStats1.lastEventTime = currentTime;
-
-                            latencyWithinEventCountWindow1 += latency;
-                            long timeDifference = currentTime - prevTime1;
-                            long timeDifferenceFromStart = currentTime - startTime;
-
-                            if ((perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-//                                    System.out.println("q1," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats1.totalLatency * 1.0d / perfStats1.count) + "," + Math.round(latencyWithinEventCountWindow1 * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
-                                prevTime1 = currentTime;
-                                latencyWithinEventCountWindow1 = 0;
-                            }
                         }
                     }
                 }
                 event.setListAfterSecondWindow(secondWindowOutputList);
             }
-
-
         }
     }
 
     private class Q2ProfitHandler implements EventHandler<DebsEvent> {
-        int position = 0;
         EmptyTaxiProcessor emptyTaxiProcessor = new EmptyTaxiProcessor();
-
-        /* "from profitStream#debs:emptyTaxi(endCellNo, medallion, dropoff_datetime, startCellNo , profit, pickup_datetime_org, iij_timestamp, dropoff_datetime_org )  " +
-                "select  cellNo , lastProfit as  profit, emptyTaxiCount , profitability,  " +
-                "pickup_datetime_val as pickup_datetime_org, dropoff_datetime_val as dropoff_datetime_org, iij_timestamp_val as iij_timestamp " +
-                " insert into profitRawData ;"
-                 */
 
         @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
             List<DebsEvent> after = debsEvent.getListAfterFirstWindow();
             for (DebsEvent event : after) {
                 emptyTaxiProcessor.process(event);
-                position++;
-
             }
-
         }
     }
 
     private class Q2MaxKHandler implements EventHandler<DebsEvent> {
         MaxKQ2Processor maxKQ2Processor = new MaxKQ2Processor();
-        public long prevTime1 = System.currentTimeMillis();
-        public long latencyWithinEventCountWindow1;
-
-        /*"@info(name = 'query1') " +
-                "from profitRawData#MaxK:getMaxK2(profitability, profit, emptyTaxiCount, cellNo,10, iij_timestamp) " +
-                "select  pickup_datetime_org, dropoff_datetime_org, " +
-                "profitable_cell_id_1, empty_taxies_in_cell_id_1, median_profit_in_cell_id_1, profitability_of_cell_1," +
-                "profitable_cell_id_2, empty_taxies_in_cell_id_2, median_profit_in_cell_id_2, profitability_of_cell_2," +
-                "profitable_cell_id_3, empty_taxies_in_cell_id_3, median_profit_in_cell_id_3, profitability_of_cell_3," +
-                "profitable_cell_id_4, empty_taxies_in_cell_id_4, median_profit_in_cell_id_4, profitability_of_cell_4," +
-                "profitable_cell_id_5, empty_taxies_in_cell_id_5, median_profit_in_cell_id_5, profitability_of_cell_5," +
-                "profitable_cell_id_6, empty_taxies_in_cell_id_6, median_profit_in_cell_id_6, profitability_of_cell_6," +
-                "profitable_cell_id_7, empty_taxies_in_cell_id_7, median_profit_in_cell_id_7, profitability_of_cell_7," +
-                "profitable_cell_id_8, empty_taxies_in_cell_id_8, median_profit_in_cell_id_8, profitability_of_cell_8," +
-                "profitable_cell_id_9, empty_taxies_in_cell_id_9, median_profit_in_cell_id_9, profitability_of_cell_9," +
-                "profitable_cell_id_10, empty_taxies_in_cell_id_10, median_profit_in_cell_id_10, profitability_of_cell_10, iij_timestamp " +
-                "insert into q2outputStream;"; */
 
         @Override
         public void onEvent(DebsEvent debsEvent, long l, boolean b) throws Exception {
@@ -421,26 +333,10 @@ public class ManagerWithFileWriteThread_Handler {
                             perfStats2.count++;
                             perfStats2.totalLatency += latency;
                             perfStats2.lastEventTime = currentTime;
-
-                            latencyWithinEventCountWindow1 += latency;
-                            long timeDifference = currentTime - prevTime1;
-                            long timeDifferenceFromStart = currentTime - startTime;
-
-                            if ((perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
-                                //<time from start(ms)><time from start(s)><overall latency (ms/event)><latency in this time window (ms/event)><over all throughput (events/s)><throughput in this time window (events/s)><total number of events received till this time (events)>
-//                                    System.out.println("q1," + timeDifferenceFromStart + "," + Math.round(timeDifferenceFromStart / 1000) + "," + Math.round(perfStats2.totalLatency * 1.0d / perfStats2.count) + "," + Math.round(latencyWithinEventCountWindow1 * 1.0d / Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1) + "," + Math.round(perfStats1.count * 1000.0d / timeDifferenceFromStart) + "," + Math.round(Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 * 1000.0d / timeDifference) + "," + perfStats1.count);
-                                prevTime1 = currentTime;
-                                latencyWithinEventCountWindow1 = 0;
-                            }
                         }
                     }
-
                 }
-
             }
-
-
         }
     }
 }
-

@@ -6,13 +6,11 @@ import java.util.List;
 
 
 public class DebsEvent {
-
+	//Note that we do not use the fields hack_license, trip_distance, trip_time_in_secs, which are 
+	//available on the original data set
     int medallion;
-    String hack_license;
     String pickup_datetime_org;
     String dropoff_datetime_org;
-    int trip_time_in_secs;
-    float trip_distance;
     float pickup_longitude;
     float pickup_latitude;
     float dropoff_longitude;
@@ -49,15 +47,12 @@ public class DebsEvent {
 
     }
 
-    public DebsEvent(int medallion, String hack_license, String pickup_datetime_org, String dropoff_datetime_org, int trip_time_in_secs, float trip_distance, float pickup_longitude,
+    public DebsEvent(int medallion, String pickup_datetime_org, String dropoff_datetime_org, float pickup_longitude,
                      float pickup_latitude, float dropoff_longitude, float dropoff_latitude, float fare_plus_ip_amount, long iij_timestamp, int startCellNo, int endCellNo,
                      long pickup_datetime, long dropoff_datetime) {
         this.medallion = medallion;
-        this.hack_license = hack_license;
         this.pickup_datetime_org = pickup_datetime_org;
         this.dropoff_datetime_org = dropoff_datetime_org;
-        this.trip_time_in_secs = trip_time_in_secs;
-        this.trip_distance = trip_distance;
         this.pickup_longitude = pickup_longitude;
         this.pickup_latitude = pickup_latitude;
         this.dropoff_longitude = dropoff_longitude;
@@ -78,14 +73,6 @@ public class DebsEvent {
         this.medallion = medallion;
     }
 
-    public String getHack_license() {
-        return hack_license;
-    }
-
-    public void setHack_license(String hack_license) {
-        this.hack_license = hack_license;
-    }
-
     public String getPickup_datetime_org() {
         return pickup_datetime_org;
     }
@@ -102,28 +89,12 @@ public class DebsEvent {
         this.dropoff_datetime_org = dropoff_datetime_org;
     }
 
-    public int getTrip_time_in_secs() {
-        return trip_time_in_secs;
-    }
-
     public List<DebsEvent> getListAfterFirstWindow() {
         return listAfterFirstWindow;
     }
 
     public void setListAfterFirstWindow(List<DebsEvent> listAfterFirstWindow) {
         this.listAfterFirstWindow = listAfterFirstWindow;
-    }
-
-    public void setTrip_time_in_secs(int trip_time_in_secs) {
-        this.trip_time_in_secs = trip_time_in_secs;
-    }
-
-    public float getTrip_distance() {
-        return trip_distance;
-    }
-
-    public void setTrip_distance(float trip_distance) {
-        this.trip_distance = trip_distance;
     }
 
     public float getPickup_longitude() {
@@ -256,9 +227,8 @@ public class DebsEvent {
         this.profitObjList = profitObjList;
     }
 
-    public DebsEvent clone(){
-        return  new DebsEvent(getTrip_time_in_secs(),hack_license,pickup_datetime_org,dropoff_datetime_org,trip_time_in_secs,trip_distance,pickup_longitude,pickup_latitude,dropoff_longitude,dropoff_latitude,fare_plus_ip_amount,iij_timestamp,startCellNo, endCellNo,pickup_datetime, dropoff_datetime);
+    public DebsEvent clone(){    	
+    	return  new DebsEvent(medallion,pickup_datetime_org,dropoff_datetime_org,pickup_longitude,pickup_latitude,dropoff_longitude,dropoff_latitude,fare_plus_ip_amount,iij_timestamp,startCellNo, endCellNo,pickup_datetime, dropoff_datetime);
+    	
     }
-
-
 }

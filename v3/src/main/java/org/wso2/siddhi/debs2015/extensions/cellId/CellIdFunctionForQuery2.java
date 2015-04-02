@@ -29,34 +29,29 @@ public class CellIdFunctionForQuery2 extends FunctionExecutor {
     }
 
     @Override
-    protected Object execute(Object[] objects) {
-        //--------------------------------------------------          The following is for longitude -------------------------------------
-
-        float inputLongitude = Float.parseFloat(String.valueOf(((Object[])objects)[0]));
-        //+Miyuru: better to declare the variable as short so that we can save memory
-        //int cellIdFirstComponent;
-        short cellIdFirstComponent;
+    protected Object execute(Object[] objects) {    
+    	//--------------------------------------------------          The following is for longitude -------------------------------------
+    	short cellIdFirstComponent;
+    	float inputLongitude = Float.parseFloat(String.valueOf(((Object[])objects)[0]));
 
         if(westMostLongitude==inputLongitude){
-            cellIdFirstComponent= gridResolution;
+            cellIdFirstComponent= 1;
         } else {
-            cellIdFirstComponent = (short) ((((eastMostLongitude - inputLongitude) / longitudeDifference) * gridResolution) + 1);
+            cellIdFirstComponent = (short) Math.round((((inputLongitude- westMostLongitude) / longitudeDifference) * gridResolution));
         }
-
 
         //--------------------------------------------------          The following is for latitude -------------------------------------
-        float inputLatitude = Float.parseFloat(String.valueOf(((Object[])objects)[1]));
 
-        //int cellIdSecondComponent;
         short cellIdSecondComponent;
-
-        if(southMostLatitude==inputLatitude){
-            cellIdSecondComponent= gridResolution;
+        float inputLatitude = Float.parseFloat(String.valueOf(((Object[])objects)[1]));
+        
+        if(northMostLatitude == inputLatitude) {
+            cellIdSecondComponent = 1;
         } else {
-            cellIdSecondComponent = (short) ((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution) + 1);
+            cellIdSecondComponent = (short) Math.round((((northMostLatitude - inputLatitude) / latitudeDifference) * gridResolution));
         }
 
-        return cellIdFirstComponent*1000+cellIdSecondComponent;
+        return  (cellIdFirstComponent*1000+cellIdSecondComponent);
     }
 
     @Override

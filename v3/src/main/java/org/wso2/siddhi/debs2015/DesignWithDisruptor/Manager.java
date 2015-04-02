@@ -60,8 +60,6 @@ public class Manager {
         try {
             executionPlanRuntimeQ1p1.addCallback("q1outputStream", new StreamCallback() {
 
-                public long prevTime = System.currentTimeMillis();
-                public long latencyWithinEventCountWindow;
                 FileWriter fw = new FileWriter(new File(logDir + "/output-1-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 StringBuilder stringBuilder = new StringBuilder();
@@ -73,10 +71,6 @@ public class Manager {
                     if (startTimeOutput == 0) {
                         startTimeOutput = System.currentTimeMillis();
                     }
-
-//                    long eventOriginationTime = (Long) data[22];
-//                    long currentTime = System.currentTimeMillis();
-//                    long latency = currentTime - eventOriginationTime;
                     
                     long eventOriginationTime = 0l;
                     long currentTime = 0l;
@@ -100,24 +94,13 @@ public class Manager {
                             stringBuilder.append("\r\n");
                         }
 
-
                         //If the performance logging flag is set, we need to print the performance measurements.
                         if (performanceLoggingFlag) {
 
                             perfStats1.count++;
                             perfStats1.totalLatency += latency;
                             perfStats1.lastEventTime = currentTime;
-
-                            latencyWithinEventCountWindow += latency;
-                            long timeDifference = currentTime - prevTime;
-                            long timeDifferenceFromStart = currentTime - startTimeOutput;
-
-                            if ((perfStats1.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY1 == 0) && (timeDifference != 0)) {
-                                prevTime = currentTime;
-                                latencyWithinEventCountWindow = 0;
-                            }
                         }
-
                     }
                     if (printOutputFlag) {
                         try {
@@ -129,16 +112,10 @@ public class Manager {
                             stringBuilder.setLength(0);
                         }
                     }
-
                 }
-
             });
 
-
             executionPlanRuntimeQ2p3.addCallback("q2outputStream", new StreamCallback() {
-
-                public long prevTime = System.currentTimeMillis();
-                public long latencyWithinEventCountWindow;
                 FileWriter fw = new FileWriter(new File(logDir + "/output-2-" + System.currentTimeMillis() + ".csv").getAbsoluteFile());
                 BufferedWriter bw = new BufferedWriter(fw);
                 StringBuilder stringBuilder = new StringBuilder();
@@ -150,10 +127,6 @@ public class Manager {
                     if (startTimeOutput == 0) {
                         startTimeOutput = System.currentTimeMillis();
                     }
-                    
-//                    long currentTime = System.currentTimeMillis();
-//                    long eventOriginationTime = (Long) data[42];
-//                    long latency = currentTime - eventOriginationTime;
                     
                     long currentTime = 0l;
                     long eventOriginationTime = 0l;
@@ -182,17 +155,9 @@ public class Manager {
                             perfStats2.count++;
                             perfStats2.totalLatency += latency;
                             perfStats2.lastEventTime = currentTime;
-
-                            latencyWithinEventCountWindow += latency;
-                            long timeDifference = currentTime - prevTime;
-                            long timeDifferenceFromStart = currentTime - startTimeOutput;
-
-                            if ((perfStats2.count % Constants.STATUS_REPORTING_WINDOW_OUTPUT_QUERY2 == 0) && (timeDifference != 0)) {
-                                prevTime = currentTime;
-                                latencyWithinEventCountWindow = 0;
-                            }
                         }
                     }
+                    
                     if (printOutputFlag) {
                         try {
                             bw.write(stringBuilder.toString());
@@ -205,12 +170,9 @@ public class Manager {
                     }
                 }
             });
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }
-
 
         executionPlanRuntimeQ2p1.addCallback("profitStream", new StreamCallback() {
             @Override
@@ -308,19 +270,19 @@ public class Manager {
                 //We make an assumption here that we do not get empty strings due to missing values that may present in the input data set.
                 Iterator<String> dataStrIterator = splitter.split(line).iterator();
                 String medallion = dataStrIterator.next();
-                String hack_license = dataStrIterator.next();
+                dataStrIterator.next();//hack_license
                 String pickup_datetime = dataStrIterator.next();
                 String dropoff_datetime = dataStrIterator.next();
-                String trip_time_in_secs = dataStrIterator.next();
-                String trip_distance = dataStrIterator.next();
+                dataStrIterator.next();//trip_time_in_secs
+                dataStrIterator.next();//trip_distance
                 String pickup_longitude = dataStrIterator.next();
                 String pickup_latitude = dataStrIterator.next();
                 String dropoff_longitude = dataStrIterator.next();
                 String dropoff_latitude = dataStrIterator.next();
-                dataStrIterator.next();
+                dataStrIterator.next();//payment_type
                 String fare_amount = dataStrIterator.next();
-                dataStrIterator.next();
-                dataStrIterator.next();
+                dataStrIterator.next();//surcharge
+                dataStrIterator.next();//mta_tax
                 String tip_amount = dataStrIterator.next();
 
                 long currentTIme = System.currentTimeMillis();
@@ -375,11 +337,8 @@ public class Manager {
 
                 try {
                     eventData = new Object[]{medallion,
-                            hack_license,
                             pickup_datetime,
                             dropoff_datetime,
-                            Short.parseShort(trip_time_in_secs),
-                            Float.parseFloat(trip_distance), //This can be represented by two bytes
                             pickup_longitude,
                             pickup_latitude,
                             dropoff_longitude,
@@ -413,6 +372,5 @@ public class Manager {
         }
         System.out.println("Now exiting from data loader");
     }
-
 }
 

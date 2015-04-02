@@ -52,8 +52,8 @@ public class Query2Part1 {
         //total paid amount in dollars
         // This is an additional field used to indicate the time when the event has been injected to the query network.
 
-        String taxiTripStream = "define stream taxi_trips ( medallion int , hack_license string ,  pickup_datetime_org string, dropoff_datetime_org string , trip_time_in_secs int, " +
-                "trip_distance float, pickup_longitude float,  pickup_latitude float,  dropoff_longitude float,  dropoff_latitude float, fare_plus_ip_amount float, iij_timestamp long); ";
+        String taxiTripStream = "define stream taxi_trips ( medallion int , pickup_datetime_org string, dropoff_datetime_org string , " +
+                " pickup_longitude float,  pickup_latitude float,  dropoff_longitude float,  dropoff_latitude float, fare_plus_ip_amount float, iij_timestamp long); ";
 
         //The profit that originates from an area is computed by calculating the median fare + tip for trips that started in the area and ended within the last 15 minutes
 
